@@ -122,3 +122,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# ORCA
+orca-master/
+crossvalide.m
