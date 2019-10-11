@@ -2,6 +2,9 @@
 import argparse
 import sys
 import TSOC.utils.experiments as exp
+import numpy as np
+import matlab
+import itertools as it
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data", "-d", type=str, default="/home/david/TSOC/datasets/", help="Path to the datasets")
@@ -22,18 +25,34 @@ def comparison_experiments(data_dir, res_dir):
     ]
 
     params = {
-        "kdlor": {'C': 10.0, 'k': 0.1, 'u': 0.01},
+        "kdlor": {'C': np.logspace(-3, 3, 7),
+                  'k': np.logspace(-3, 3, 7),
+                  'u': np.logspace(-3, 3, 7)},
         "pom": [],
-        "svorim": {'C': 10.0, 'k': 0.1},
+        "svorim": {'C': np.logspace(-3, 3, 7),
+                   'k': np.logspace(-3, 3, 7)},
     }
+
+    params = {
+        "kdlor": {'C': np.logspace(-3, 3, 7),
+                  'k': np.logspace(-3, 3, 7),
+                  'u': np.logspace(-3, 3, 7)},
+        "pom": [],
+        "svorim": {'C': [1, 2],
+                   'k': [3, 4]},
+    }
+
 
     for d in small_datasets:
         for c in complete_classifiers:
             print('Algorithm:', c, '\tDataset:', d)
-             #try:
-            exp.run_experiment(data_dir, res_dir, c, d, params[c], overwrite=True)
-        #    except:
-            #print('\n\n FAILED: ', sys.exc_info()[0], '\n\n')
+            try:
+                params_names = sorted(params[c])
+                combinations = it.product(*(params[c][param] for param in params_names))
+                params_c = list(combinations)
+                exp.run_experiment(data_dir, res_dir, c, d, params_c, params_names, overwrite=True)
+            except:
+                print('\n\n FAILED: ', sys.exc_info()[0], '\n\n')
 
 
 if __name__ == "__main__":

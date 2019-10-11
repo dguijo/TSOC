@@ -35,6 +35,7 @@ def load_datasets(data_dir, dset_name, rtn_format='matlab'):
 
         tr = {'patterns': trainX, 'targets': trainY}
         te = {'patterns': testX, 'targets': testY}
+
         return tr, te, data
 
     return data['train'], data['test'], data
@@ -77,9 +78,11 @@ def save_results(res_dir, cls_name, dset_name, classifier_info, metrics):
     file = open(hyperparams_path + 'params.csv', 'w')
     file.write(str(dset_name) + ',' + str(cls_name) + '\n')
 
-    # TODO: Todos los algoritmos deben tener el campo algorithm y parameters. POM no lo tiene.
-    for i in classifier_info['model']['parameters'].keys():
-        file.write(str(i) + ',' + str(classifier_info['model']['parameters'][i]) + '\n')
+    try:
+        for i in classifier_info['model']['parameters'].keys():
+            file.write(str(i) + ',' + str(classifier_info['model']['parameters'][i]) + '\n')
+    except KeyError:
+        pass
 
     file.close()
 
@@ -101,7 +104,7 @@ def save_results(res_dir, cls_name, dset_name, classifier_info, metrics):
     # var = pickle.load(handle)
 
 
-def run_experiment(data_dir, res_dir, cls_name, dset_name, cls_params, overwrite):
+def run_experiment(data_dir, res_dir, cls_name, dset_name, cls_params, param_names, overwrite):
     if not overwrite:
         full_path = str(res_dir) + str(cls_name) + '/Predictions/' + str(dset_name) + '/metrics.csv'
         if os.path.exists(full_path):
@@ -109,15 +112,22 @@ def run_experiment(data_dir, res_dir, cls_name, dset_name, cls_params, overwrite
             return
 
     eng = matlab.engine.start_matlab()  # Para tenerlo en el background matlab.engine.start_matlab(background=True)
+
+    #eng.warning('off', 'all')
+
     eng.addpath('../orca-master/src/Algorithms/')
     eng.addpath('../orca-master/src/Measures/')
+    eng.addpath('../TSOC/utils/')
 
     train, test, original_data = load_datasets(data_dir, dset_name, 'matlab')
 
     classifier = set_classifier(cls_name, eng)
+    print(matlab.double(cls_params))
+    best_params = eng.crossvalide(classifier, train, 2.0, matlab.double(cls_params), param_names)
+    print(best_params)
 
     # The Matlab object should be the first param.
-    classifier_info = eng.fitpredict(classifier, train, test, cls_params)
+    classifier_info = eng.fitpredict(classifier, train, test, best_params)
 
     cm = eng.confusionmat(test['targets'], classifier_info['predictedTest'])
 
