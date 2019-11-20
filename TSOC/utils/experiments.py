@@ -59,15 +59,25 @@ def save_results(res_dir, cls_name, dset_name, classifier_info, metrics):
 
     # Include metrics and times in the metrics file
     file = open(metrics_path + 'metrics.csv', 'w')
-    file.write(str(dset_name) + ',' + str(cls_name) + '\n')
+    file.write('Dataset:,' + str(dset_name) + '\n')
+    file.write('\nClassifier:,' + str(cls_name) + '\n')
 
+    file.write('\nMetrics:\n')
     for i in metrics.keys():
         if i != 'cm':
             file.write(str(i) + ',' + str(metrics[i]) + '\n')
 
-    file.write('\n')
-    file.write('trainTime,' + str(classifier_info['trainTime']) + '\n')
-    file.write('testTime,' + str(classifier_info['testTime']) + '\n')
+    file.write('\nTimes:\n')
+    file.write('crossvalidation,' + str(classifier_info['crossTime']) + '\n')
+    file.write('training,' + str(classifier_info['trainTime']) + '\n')
+    file.write('testing,' + str(classifier_info['testTime']) + '\n')
+
+    try:
+        file.write('\nParameters:\n')
+        for i in classifier_info['model']['parameters'].keys():
+            file.write(str(i) + ',' + str(classifier_info['model']['parameters'][i]) + '\n')
+    except KeyError:
+        pass
 
     file.close()
 
@@ -122,19 +132,30 @@ def run_experiment(data_dir, res_dir, cls_name, dset_name, cls_params, param_nam
     train, test, original_data = load_datasets(data_dir, dset_name, 'matlab')
 
     classifier = set_classifier(cls_name, eng)
-    print(matlab.double(cls_params))
-    best_params = eng.crossvalide(classifier, train, 2.0, matlab.double(cls_params), param_names)
-    print(best_params)
+    #print(matlab.double(cls_params))
+
+    if cls_params:  # For classifiers with parameters
+        start = time.time()
+        best_params = eng.crossvalide(classifier, train, 2.0, matlab.double(cls_params), param_names)
+        cross_time = time.time() - start
+        print("Best found params:")
+        print(best_params)
+    else:  # For classifiers without parameters: POM, etc.
+        best_params = []
+        cross_time = 0
+
 
     # The Matlab object should be the first param.
     classifier_info = eng.fitpredict(classifier, train, test, best_params)
+    classifier_info["crossTime"] = cross_time
 
     cm = eng.confusionmat(test['targets'], classifier_info['predictedTest'])
 
     metrics = {'cm': np.array(cm._data).reshape(cm.size[::-1]).T, 'ccr': eng.CCR.calculateMetric(cm),
-                  'mae': eng.MAE.calculateMetric(cm), 'amae': eng.AMAE.calculateMetric(cm),
-                  'wkappa': eng.Wkappa.calculateMetric(cm), 'ms': eng.MS.calculateMetric(cm),
-                  'gm': eng.GM.calculateMetric(cm)}
+               'mae': eng.MAE.calculateMetric(cm), 'amae': eng.AMAE.calculateMetric(cm),
+               'wkappa': eng.Wkappa.calculateMetric(cm), 'ms': eng.MS.calculateMetric(cm),
+               'gm': eng.GM.calculateMetric(cm), 'mmae': eng.MMAE.calculateMetric(cm),
+               'rspearman': eng.Spearman.calculateMetric(cm), 'tkendall': eng.Tkendall.calculateMetric(cm)}
 
     eng.quit()
 

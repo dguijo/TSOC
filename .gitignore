@@ -123,6 +123,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Useless folders
+.idea
 
 # ORCA
 orca-master/
