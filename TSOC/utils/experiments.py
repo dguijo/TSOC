@@ -8,20 +8,49 @@ import pickle
 
 
 def set_classifier(cls_name, eng):
+
     if cls_name.lower() == 'kdlor':  # KDLOR
         return eng.KDLOR('kernelType', 'rbf', 'optimizationMethod', 'quadprog')
     elif cls_name.lower() == 'pom':  # POM
         return eng.POM()
     elif cls_name.lower() == 'svorim':  # SVORIM
         return eng.SVORIM()
+    elif cls_name.lower() == 'svorex':  # SVOREX
+        return eng.SVOREX()
+    elif cls_name.lower() == 'svorimlin':  # SVORIMLIN
+        return eng.SVORLin()
+    elif cls_name.lower() == 'redsvm':  # REDSVM
+        return eng.REDSVM()
+    elif cls_name.lower() == 'orboostall':  # ORBoost
+        return eng.ORBoost()
+    elif cls_name.lower() == 'hpold':  # HPOLD
+        return eng.HPOLD()
+    elif cls_name.lower() == 'opbe':  # OPBE
+        return eng.OPBE()
+    elif cls_name.lower() == 'svmop':  # SVMOP
+        return eng.SVMOP()
+    elif cls_name.lower() == 'svr':  # SVR
+        return eng.SVR()
+    elif cls_name.lower() == 'svc1v1':  # SVC1V1
+        return eng.SVC1V1()
+    elif cls_name.lower() == 'svc1va':  # SVC1VA
+        return eng.SVC1VA()
+    elif cls_name.lower() == 'cssvc':  # CSSVC
+        return eng.CSSVC()
+    elif cls_name.lower() == 'nnop':  # NNOP
+        return eng.NNOP()
+    elif cls_name.lower() == 'nnpom':  # NNPOM
+        return eng.NNPOM()
+    elif cls_name.lower() == 'elmop':  # ELMOP
+        return eng.ELMOP()
     else:
         return 'UNKNOWN CLASSIFIER'
 
 
 def load_datasets(data_dir, dset_name, rtn_format='matlab'):
     # Read the train and test files
-    train = pd.read_csv(data_dir + dset_name + '/train_' + dset_name + '.0', sep=' ', header=None)
-    test = pd.read_csv(data_dir + dset_name + '/test_' + dset_name + '.0', sep=' ', header=None)
+    train = pd.read_csv(data_dir + dset_name + '/' + dset_name + '_train.0', sep=' ', header=None)
+    test = pd.read_csv(data_dir + dset_name + '/' + dset_name + '_test.0', sep=' ', header=None)
 
     data = {'train': {'patterns': train.iloc[:, :-1], 'targets': train.iloc[:, -1]},
             'test': {'patterns': test.iloc[:, :-1], 'targets': test.iloc[:, -1]}}
@@ -138,16 +167,16 @@ def run_experiment(data_dir, res_dir, cls_name, dset_name, cls_params, param_nam
         start = time.time()
         best_params = eng.crossvalide(classifier, train, 2.0, matlab.double(cls_params), param_names)
         cross_time = time.time() - start
-        print("Best found params:")
-        print(best_params)
+        #print("Best found params:")
+        #print(best_params)
     else:  # For classifiers without parameters: POM, etc.
         best_params = []
         cross_time = 0
 
-
     # The Matlab object should be the first param.
     classifier_info = eng.fitpredict(classifier, train, test, best_params)
     classifier_info["crossTime"] = cross_time
+
 
     cm = eng.confusionmat(test['targets'], classifier_info['predictedTest'])
 

@@ -1,5 +1,5 @@
 function [bestParam] = crossvalide(algorithmObj, train, kFold, params, param_names)
-%CROSSVALIDE Fucntion to perform automatic crossvalidation based on the train set
+%CROSSVALIDE Function to perform automatic crossvalidation based on the train set
     CVO = cvpartition(train.targets,'KFold',kFold);
     bestAccuracy = 0;
     bestParam = [];
@@ -20,8 +20,8 @@ function [bestParam] = crossvalide(algorithmObj, train, kFold, params, param_nam
             accuracy = accuracy + CCR.calculateMetric(testCV.targets, info.predictedTest);
         end
         accuracy = accuracy / kFold;
-        fprintf('Accuracy: %f, Minimum Sensitivity: %f\n', accuracy, MS.calculateMetric(testCV.targets,info.predictedTest));
-        disp(param)
+        %fprintf('Accuracy: %f, Minimum Sensitivity: %f\n', accuracy, MS.calculateMetric(testCV.targets,info.predictedTest));
+        %disp(param)
         if accuracy > bestAccuracy
             bestAccuracy = accuracy;
             bestParam = param;
