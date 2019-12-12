@@ -133,3 +133,5 @@ orca-master/
 results/
 datasets/
 timeseries/
+
+comparing_methods/*

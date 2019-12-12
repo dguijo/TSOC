@@ -3,7 +3,8 @@ import argparse
 import sys
 import TSOC.utils.experiments as exp
 from TSOC.utils.shapelets import writeShapeletsToCSV
-from TSOC.transformers.ordST import ContractedOrdinalShapeletTransform
+from TSOC.transformers.ordST_1 import ContractedOrdinal1ShapeletTransform
+from TSOC.transformers.ordST_2 import ContractedOrdinal2ShapeletTransform
 from sktime.transformers.shapelets import ContractedShapeletTransform
 import numpy as np
 import os
@@ -17,7 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--timeseriesPath", "-t", type=str, default="/home/david/TSOC/timeseries/", help="Path to time series")
 parser.add_argument("--datasetPath", "-p", type=str, default="/home/david/TSOC/datasets/", help="Path to datasets")
 parser.add_argument("--datasetName", "-d", type=str, default="Beef", help="Dataset name")
-parser.add_argument("--extractShapelets", "-e", type=bool, default=False, help="Boolean to extract or not the shapelets")
+parser.add_argument("--extractShapelets", "-e", type=bool, default=True, help="Boolean to extract or not the shapelets")
 parser.add_argument("--shp", "-s", type=str, default="Standard", help="Shapelet extraction approach used")
 parser.add_argument("--res", "-r", type=str, default="/home/david/TSOC/results/", help="Path to save the results")
 args = parser.parse_args()
@@ -132,7 +133,9 @@ def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type):
     if shp_type == "Standard":
         shp = ContractedShapeletTransform(time_limit_in_mins=0.5, random_state=0)
     elif shp_type == "Ordinal_1":
-        shp = ContractedOrdinalShapeletTransform(time_limit_in_mins=0.5, random_state=0)
+        shp = ContractedOrdinal1ShapeletTransform(time_limit_in_mins=0.5, random_state=0)
+    elif shp_type == "Ordinal_2":
+        shp = ContractedOrdinal2ShapeletTransform(time_limit_in_mins=0.5, random_state=0)
     else:
         shp = ContractedShapeletTransform(time_limit_in_mins=0.5, random_state=0)
     shp.fit(trainX, trainY)
