@@ -232,13 +232,6 @@ class OrdinalShapeletTransform(BaseTransformer):
                         # don't evaluate candidate against own series
                         continue
 
-                    if y[i]==this_class_val:
-                        num_visited_this_class += 1
-                        binary_class_identifier = 1 # positive for this class
-                    else:
-                        num_visited_other_class += 1
-                        binary_class_identifier = -1 # negative for any other class
-
                     bsf_dist = np.inf
 
                     start_left = cand_start_pos
@@ -270,18 +263,7 @@ class OrdinalShapeletTransform(BaseTransformer):
                         start_left-=1
                         start_right+=1
 
-                    orderline.append((bsf_dist,binary_class_identifier))
-                    # sorting required after each add for early IG abandon.
-                    # timsort should be efficient as array is almost in order - insertion-sort like behaviour in this case.
-                    # Can't use heap as need to traverse in order multiple times, not just access root
-                    orderline.sort()
-
-                    if len(orderline) > 2:
-                        ig_upper_bound = OrdinalShapeletTransform.calc_early_binary_ig(orderline, num_visited_this_class, num_visited_other_class, binary_ig_this_class_count-num_visited_this_class, binary_ig_other_class_count-num_visited_other_class)
-                        # print("upper: "+str(ig_upper_bound))
-                        if ig_upper_bound <= ig_cutoff:
-                            candidate_rejected = True
-                            break
+                    orderline.append((bsf_dist,y[i]))
 
                 candidates_evaluated += 1
                 if self.verbose > 3 and candidates_evaluated % 100 == 0:
@@ -289,7 +271,7 @@ class OrdinalShapeletTransform(BaseTransformer):
 
                 # only do if candidate was not rejected
                 if candidate_rejected is False:
-                    final_ig = OrdinalShapeletTransform.calc_binary_ig(orderline, binary_ig_this_class_count, binary_ig_other_class_count)
+                    final_ig = OrdinalShapeletTransform.calc_quality(orderline, y[series_id])
                     accepted_candidate = Shapelet(series_id, cand_start_pos, cand_len, final_ig, candidate)
 
                     # add to min heap to store shapelets for this class
@@ -480,6 +462,13 @@ class OrdinalShapeletTransform(BaseTransformer):
             if num_other_class != 0:
                 ent -= num_other_class / (num_this_class + num_other_class) * np.log2(num_other_class / (num_this_class + num_other_class))
             return ent
+
+    @staticmethod
+    def calc_quality(orderline, class_shapelet):
+        quality = 0
+        for i in orderline:
+            quality += (i[0] * (np.abs(i[1] - class_shapelet) + 1))
+        return 1/(1+quality)
 
     # could cythonise
     @staticmethod

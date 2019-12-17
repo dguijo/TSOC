@@ -16,7 +16,7 @@ from sklearn.preprocessing import LabelEncoder
 parser = argparse.ArgumentParser()
 parser.add_argument("--timeseriesPath", "-t", type=str, default="/home/david/TSOC/timeseries/", help="Path to time series")
 parser.add_argument("--datasetPath", "-p", type=str, default="/home/david/TSOC/datasets/", help="Path to datasets")
-parser.add_argument("--datasetName", "-d", type=str, default="Beef", help="Dataset name")
+parser.add_argument("--datasetName", "-d", type=str, default="DistalPhalanxTW", help="Dataset name")
 parser.add_argument("--extractShapelets", "-e", type=bool, default=False, help="Boolean to extract or not the shapelets")
 parser.add_argument("--shp", "-s", type=str, default="Standard", help="Shapelet extraction approach used")
 parser.add_argument("--res", "-r", type=str, default="/home/david/TSOC/results/", help="Path to save the results")
