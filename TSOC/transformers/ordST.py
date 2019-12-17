@@ -3,7 +3,7 @@ transformer from the time domain into the shapelet domain. Standard full transfo
 a randoms sampler
 """
 __author__ = ["Jason Lines", "David Guijo"]
-__all__=["OrdinalShapeletTransform","ContractedOrdinal1ShapeletTransform","RandomEnumerationOrdinalShapeletTransform","Shapelet","ShapeletPQ"]
+__all__=["OrdinalShapeletTransform","ContractedOrdinalShapeletTransform","RandomEnumerationOrdinalShapeletTransform","Shapelet","ShapeletPQ"]
 
 import os
 import time
@@ -124,7 +124,7 @@ class OrdinalShapeletTransform(BaseTransformer):
         case_ids_by_class = {i: np.where(y == i)[0] for i in distinct_class_vals}
 
         # if transform is random/contract then shuffle the data initially when determining which cases to visit
-        if type(self) is RandomEnumerationOrdinalShapeletTransform or type(self) is ContractedOrdinal1ShapeletTransform:
+        if type(self) is RandomEnumerationOrdinalShapeletTransform or type(self) is ContractedOrdinalShapeletTransform:
             for i in range(len(distinct_class_vals)):
                 self.random_state.shuffle(case_ids_by_class[distinct_class_vals[i]])
 
@@ -246,7 +246,7 @@ class OrdinalShapeletTransform(BaseTransformer):
                             start_left = X_lens[i]-1-cand_len
 
                         comparison = OrdinalShapeletTransform.zscore(X[i][:,start_left: start_left+ cand_len])
-                        dist_left = np.linalg.norm(candidate-comparison) * np.abs(y[i] - y[candidate_idx])
+                        dist_left = np.linalg.norm(candidate-comparison)
                         bsf_dist = min(dist_left*dist_left, bsf_dist)
 
                         # for odd lengths
@@ -257,7 +257,7 @@ class OrdinalShapeletTransform(BaseTransformer):
                         if start_right == X_lens[i]-cand_len+1:
                             start_right = 0
                         comparison = OrdinalShapeletTransform.zscore(X[i][:,start_right: start_right + cand_len])
-                        dist_right = np.linalg.norm(candidate-comparison) * np.abs(y[i] - y[candidate_idx])
+                        dist_right = np.linalg.norm(candidate-comparison)
                         bsf_dist = min(dist_right*dist_right, bsf_dist)
 
                         start_left-=1
@@ -599,7 +599,7 @@ class OrdinalShapeletTransform(BaseTransformer):
         return sum_dist
 
 
-class ContractedOrdinal1ShapeletTransform(OrdinalShapeletTransform):
+class ContractedOrdinalShapeletTransform(OrdinalShapeletTransform):
     __author__ = "Jason Lines and David Guijo"
 
     """Contracted Shapelet Transform.
