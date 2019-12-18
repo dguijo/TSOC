@@ -228,10 +228,6 @@ class OrdinalShapeletTransform(BaseTransformer):
                     if y[i] != cases_to_visit[comparison_series_idx][1]:
                         raise ValueError("class match sanity test broken")
 
-                    if i == series_id:
-                        # don't evaluate candidate against own series
-                        continue
-
                     bsf_dist = np.inf
 
                     start_left = cand_start_pos
@@ -271,7 +267,7 @@ class OrdinalShapeletTransform(BaseTransformer):
 
                 # only do if candidate was not rejected
                 if candidate_rejected is False:
-                    final_ig = OrdinalShapeletTransform.calc_quality(orderline, y[series_id])
+                    final_ig = OrdinalShapeletTransform.calc_fisher_ordinal(orderline)
                     accepted_candidate = Shapelet(series_id, cand_start_pos, cand_len, final_ig, candidate)
 
                     # add to min heap to store shapelets for this class
@@ -464,11 +460,40 @@ class OrdinalShapeletTransform(BaseTransformer):
             return ent
 
     @staticmethod
-    def calc_quality(orderline, class_shapelet):
-        quality = 0
-        for i in orderline:
-            quality += (i[0] * (np.abs(i[1] - class_shapelet) + 1))
-        return 1/(1+quality)
+    def calc_fisher(orderline):
+
+        orderline = np.array(orderline)
+
+        media_general = np.mean(orderline[:, 0])
+
+        numerador = 0
+        denominador = 0
+        labels, counts = np.unique(orderline[:, 1], return_counts=True)
+
+        for i, j in enumerate(labels):
+            numerador += (counts[i] * np.power(np.mean(orderline[orderline[:, 1] == j, 0]) - media_general, 2))
+            denominador += (counts[i] * np.std(orderline[orderline[:, 1] == j, 0]))
+
+        return numerador/denominador
+
+
+    @staticmethod
+    def calc_fisher_ordinal(orderline):
+
+        orderline = np.array(orderline)
+
+        numerador = 0
+        denominador = 0
+        labels, counts = np.unique(orderline[:, 1], return_counts=True)
+
+        for k in labels:
+            denominador += np.std(orderline[orderline[:, 1] == k, 0])
+            media_distancias_k = np.mean(orderline[orderline[:, 1] == k, 0])
+            for j in labels:
+                media_distancias_j = np.mean(orderline[orderline[:, 1] == j, 0])
+                numerador += (np.abs(k - j) * np.power(media_distancias_k - media_distancias_j, 2))
+
+        return numerador/((len(labels) - 1) * denominador)
 
     # could cythonise
     @staticmethod

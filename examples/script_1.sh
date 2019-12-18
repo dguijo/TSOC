@@ -2,15 +2,15 @@
 
 source activate TSOC
 
-datasets=("Beef" "BME" "ChlorineConcentration" "CinCECGTorso" "DistalPhalanxOutlineAgeGroup" "DistalPhalanxTW" "ECG5000" "EthanolLevel" "Lightning7" "MiddlePhalanxOutlineAgeGroup" "MiddlePhalanxTW" "ProximalPhalanxOutlineAgeGroup" "ProximalPhalanxTW" "SmoothSubspace" "StarLightCurves" "UMD")
+datasets=("DistalPhalanxOutlineAgeGroup" "DistalPhalanxTW" "EthanolLevel" "MiddlePhalanxOutlineAgeGroup" "MiddlePhalanxTW" "ProximalPhalanxOutlineAgeGroup" "ProximalPhalanxTW")
 
 dir=/home/dguijo/ArtTSOC/outputs/
 mkdir -p $dir;
 
-for dataset in ${datasets[@]:0:16}
+for dataset in ${datasets[@]:0:7}
 do
 	output="output$dataset"
-	nohup python main.py -t "/home/dguijo/ArtTSOC/timeseries/" -p "/home/dguijo/ArtTSOC/datasets/" -r "/home/dguijo/ArtTSOC/results/" -d $dataset > "$dir$output" &
+	nohup python -u cluster.py -t "/home/dguijo/ArtTSOC/timeseries/" -p "/home/dguijo/ArtTSOC/datasets/" -r "/home/dguijo/ArtTSOC/results/" -s "Ordinal_1" -d $dataset > "$dir$output" &
 done
 
 conda deactivate
