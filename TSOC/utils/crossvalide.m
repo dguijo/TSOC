@@ -1,14 +1,14 @@
 function [bestParam] = crossvalide(algorithmObj, train, kFold, params, param_names)
 %CROSSVALIDE Function to perform automatic crossvalidation based on the train set
     CVO = cvpartition(train.targets,'KFold',kFold);
-    bestAccuracy = 0;
+    best_metric = 0;
     bestParam = [];
     for i=1:length(params)
         param = struct();
         for j=1:length(param_names)
             param = setfield(param, string(param_names(j)), params(i, j));
         end
-        accuracy = 0;
+        metric = 0;
         for ff = 1:CVO.NumTestSets
             trIdx = CVO.training(ff);
             teIdx = CVO.test(ff);
@@ -17,13 +17,13 @@ function [bestParam] = crossvalide(algorithmObj, train, kFold, params, param_nam
             testCV.patterns = train.patterns(teIdx, :);
             testCV.targets = train.targets(teIdx, :);
             info = algorithmObj.fitpredict(trainCV, testCV, param);
-            accuracy = accuracy + CCR.calculateMetric(testCV.targets, info.predictedTest);
+            metric = metric + (1/(1+AMAE.calculateMetric(testCV.targets, info.predictedTest)));
         end
-        accuracy = accuracy / kFold;
-        %fprintf('Accuracy: %f, Minimum Sensitivity: %f\n', accuracy, MS.calculateMetric(testCV.targets,info.predictedTest));
+        metric = metric / kFold;
+        %fprintf('AMAE: %f, Minimum Sensitivity: %f\n', metric, MS.calculateMetric(testCV.targets,info.predictedTest));
         %disp(param)
-        if accuracy > bestAccuracy
-            bestAccuracy = accuracy;
+        if metric > best_metric
+            best_metric = metric;
             bestParam = param;
         end
     end
