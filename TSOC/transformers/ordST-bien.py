@@ -3,7 +3,7 @@ transformer from the time domain into the shapelet domain. Standard full transfo
 a randoms sampler
 """
 __author__ = ["Jason Lines", "David Guijo"]
-__all__=["OrdinalShapeletTransform","ContractedOrdinal2ShapeletTransform","RandomEnumerationOrdinalShapeletTransform","Shapelet","ShapeletPQ"]
+__all__=["OrdinalShapeletTransform","ContractedOrdinalShapeletTransform","RandomEnumerationOrdinalShapeletTransform","Shapelet","ShapeletPQ"]
 
 import os
 import time
@@ -124,7 +124,7 @@ class OrdinalShapeletTransform(BaseTransformer):
         case_ids_by_class = {i: np.where(y == i)[0] for i in distinct_class_vals}
 
         # if transform is random/contract then shuffle the data initially when determining which cases to visit
-        if type(self) is RandomEnumerationOrdinalShapeletTransform or type(self) is ContractedOrdinal2ShapeletTransform:
+        if type(self) is RandomEnumerationOrdinalShapeletTransform or type(self) is ContractedOrdinalShapeletTransform:
             for i in range(len(distinct_class_vals)):
                 self.random_state.shuffle(case_ids_by_class[distinct_class_vals[i]])
 
@@ -610,7 +610,7 @@ class OrdinalShapeletTransform(BaseTransformer):
         return sum_dist
 
 
-class ContractedOrdinal2ShapeletTransform(OrdinalShapeletTransform):
+class ContractedOrdinalShapeletTransform(OrdinalShapeletTransform):
     __author__ = "Jason Lines and David Guijo"
 
     """Contracted Shapelet Transform.

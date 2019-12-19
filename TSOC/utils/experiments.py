@@ -47,10 +47,11 @@ def set_classifier(cls_name, eng):
         return 'UNKNOWN CLASSIFIER'
 
 
-def load_datasets(data_dir, dset_name, rtn_format='matlab'):
+def load_datasets(data_dir, dset_name, transform, rtn_format='matlab'):
     # Read the train and test files
-    train = pd.read_csv(data_dir + dset_name + '/' + dset_name + '_train.0', sep=' ', header=None)
-    test = pd.read_csv(data_dir + dset_name + '/' + dset_name + '_test.0', sep=' ', header=None)
+    print(data_dir + dset_name + '/transform_' + str(transform) + '/' + dset_name + '_train.0')
+    train = pd.read_csv(data_dir + dset_name + '/transform_' + str(transform) + '/' + dset_name + '_train.0', sep=' ', header=None)
+    test = pd.read_csv(data_dir + dset_name + '/transform_' + str(transform) + '/' + dset_name + '_test.0', sep=' ', header=None)
 
     data = {'train': {'patterns': train.iloc[:, :-1], 'targets': train.iloc[:, -1]},
             'test': {'patterns': test.iloc[:, :-1], 'targets': test.iloc[:, -1]}}
@@ -70,10 +71,11 @@ def load_datasets(data_dir, dset_name, rtn_format='matlab'):
     return data['train'], data['test'], data
 
 
-def save_results(res_dir, cls_name, dset_name, classifier_info, metrics):
+def save_results(res_dir, cls_name, dset_name, classifier_info, metrics, transform):
 
     # Define the dir where all the results-related stuff is saved
-    output_path = str(res_dir) + str(cls_name) + '/' + str(dset_name) + '/'
+    output_path = str(res_dir) + 'transform_' + str(transform) + '/' + str(cls_name) + '/' + str(dset_name) + '/'
+    print(output_path)
     metrics_path = output_path + 'Metrics/'
     predictions_path = output_path + 'Predictions/'
     hyperparams_path = output_path + 'Hyperparams/'
@@ -143,7 +145,8 @@ def save_results(res_dir, cls_name, dset_name, classifier_info, metrics):
     # var = pickle.load(handle)
 
 
-def run_experiment(data_dir, res_dir, cls_name, dset_name, cls_params, param_names, overwrite):
+def run_experiment(data_dir, res_dir, cls_name, dset_name, transform, cls_params, param_names, overwrite):
+
     if not overwrite:
         full_path = str(res_dir) + str(cls_name) + '/Predictions/' + str(dset_name) + '/metrics.csv'
         if os.path.exists(full_path):
@@ -158,7 +161,7 @@ def run_experiment(data_dir, res_dir, cls_name, dset_name, cls_params, param_nam
     eng.addpath('../orca-master/src/Measures/')
     eng.addpath('../TSOC/utils/')
 
-    train, test, original_data = load_datasets(data_dir, dset_name, 'matlab')
+    train, test, original_data = load_datasets(data_dir, dset_name, transform, 'matlab')
 
     classifier = set_classifier(cls_name, eng)
     #print(matlab.double(cls_params))
@@ -188,4 +191,4 @@ def run_experiment(data_dir, res_dir, cls_name, dset_name, cls_params, param_nam
 
     eng.quit()
 
-    save_results(res_dir, cls_name, dset_name, classifier_info, metrics)
+    save_results(res_dir, cls_name, dset_name, classifier_info, metrics, transform)
