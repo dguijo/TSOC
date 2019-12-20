@@ -168,7 +168,7 @@ def run_experiment(data_dir, res_dir, cls_name, dset_name, transform, cls_params
 
     if cls_params:  # For classifiers with parameters
         start = time.time()
-        best_params = eng.crossvalide(classifier, train, 5.0, matlab.double(cls_params), param_names)
+        best_params = eng.crossvalide(classifier, train, 2.0, matlab.double(cls_params), param_names)
         cross_time = time.time() - start
         #print("Best found params:")
         #print(best_params)
