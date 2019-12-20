@@ -16,9 +16,9 @@ from sklearn.preprocessing import LabelEncoder
 parser = argparse.ArgumentParser()
 parser.add_argument("--timeseriesPath", "-t", type=str, default="/home/david/TSOC/timeseries/", help="Path to time series")
 parser.add_argument("--datasetPath", "-p", type=str, default="/home/david/TSOC/datasets/", help="Path to datasets")
-parser.add_argument("--datasetName", "-d", type=str, default="Beef", help="Dataset name")
-parser.add_argument("--extractShapelets", "-e", type=bool, default=True, help="Boolean to extract or not the shapelets")
-parser.add_argument("--shp", "-s", type=str, default="Standard", help="Shapelet extraction approach used")
+parser.add_argument("--datasetName", "-d", type=str, default="DistalPhalanxTW", help="Dataset name")
+parser.add_argument("--extractShapelets", "-e", type=bool, default=False, help="Boolean to extract or not the shapelets")
+parser.add_argument("--shp", "-s", type=str, default="Ordinal_1", help="Shapelet extraction approach used")
 parser.add_argument("--res", "-r", type=str, default="/home/david/TSOC/results/", help="Path to save the results")
 args = parser.parse_args()
 
@@ -130,15 +130,11 @@ def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type):
     trainY = trainY + 1
     testY = testY + 1
     if shp_type == "Standard":
-        shp = ContractedShapeletTransform(time_limit_in_mins=30, random_state=0)
+        shp = ContractedShapeletTransform(time_limit_in_mins=0.5, random_state=0)
     elif shp_type == "Ordinal_1":
-<<<<<<< HEAD
         shp = ContractedOrdinalShapeletTransform(time_limit_in_mins=0.5, random_state=0)
-=======
-        shp = ContractedOrdinalShapeletTransform(time_limit_in_mins=30, random_state=0)
->>>>>>> master
     else:
-        shp = ContractedShapeletTransform(time_limit_in_mins=30, random_state=0)
+        shp = ContractedShapeletTransform(time_limit_in_mins=0.5, random_state=0)
     shp.fit(trainX, trainY)
 
     shapelets = shp.get_shapelets()
