@@ -131,7 +131,6 @@ orca-master/
 
 # Results
 results/
+results_60/
 datasets/
 timeseries/
-
-comparing_methods/*
