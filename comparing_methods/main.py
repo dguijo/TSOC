@@ -19,7 +19,12 @@ from scipy.stats import wilcoxon
 from scipy.stats import friedmanchisquare
 import networkx
 
-import os
+import os 
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--metric", "-m", type=str, default="MAE", help="Metric")
+args = parser.parse_args()
 
 # inspired from orange3 https://docs.orange.biolab.si/3/data-mining-library/reference/evaluation.cd.html
 def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, highv=None,
@@ -196,13 +201,13 @@ def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, hig
 
     space_between_names = 0.3
 
-    for i in range(int(math.ceil(k / 2))):
+    for i in range(math.ceil(k / 2)):
         chei = cline + minnotsignificant + i * space_between_names
         line([(rankpos(ssums[i]), cline), (rankpos(ssums[i]), chei), (textspace - 0.1, chei)], linewidth=linewidth)
         text(textspace - 0.2, chei, filter_names(nnames[i]), ha="right", va="center", size=16)
         text(textspace + 0.5, chei - 0.1, filter_avrank(avranks[i]), ha="right", va="center", size=11)
 
-    for i in range(int(math.ceil(k / 2))):
+    for i in range(math.ceil(k / 2), k):
         chei = cline + minnotsignificant + (k - i - 1) * space_between_names
         line([(rankpos(ssums[i]), cline), (rankpos(ssums[i]), chei), (textspace + scalewidth + 0.1, chei)], linewidth=linewidth)
         text(textspace + scalewidth + 0.2, chei, filter_names(nnames[i]), ha="left", va="center", size=16)
@@ -260,7 +265,7 @@ def form_cliques(p_values, nnames):
     return networkx.find_cliques(g)
 
 
-def draw_cd_diagram(df_perf=None, alpha=0.05, fig_name='cd-diagram.png'):
+def draw_cd_diagram(df_perf=None, alpha=0.05):
     """
     Draws the critical difference diagram given the list of pairwise classifiers that are
     significant or not
@@ -274,7 +279,7 @@ def draw_cd_diagram(df_perf=None, alpha=0.05, fig_name='cd-diagram.png'):
 
     graph_ranks(average_ranks.values, average_ranks.keys(), p_values, cd=None, reverse=True, width=9, textspace=1.5)
 
-    plt.savefig(fig_name, bbox_inches='tight')
+    plt.savefig('cd-diagram.png',bbox_inches='tight')
 
 def wilcoxon_holm(alpha=0.05, df_perf=None):
     """
@@ -355,58 +360,57 @@ def wilcoxon_holm(alpha=0.05, df_perf=None):
 
 
 dir_results = "../results/"
+maximizar = False
 
-for metricName in ["CCR", "MAE", "AMAE", "MS"]:
-    maximizar = False
-    if metricName == "CCR":
-        val = 2
-    elif metricName == "MAE":
-        maximizar = True
-        val = 3
-    elif metricName == "AMAE":
-        maximizar = True
-        val = 4
-    elif metricName == "MS":
-        val = 6
-    elif metricName == "GM":
-        val = 7
-    elif metricName == "MMAE":
-        maximizar = True
-        val = 8
+if args.metric == "CCR":
+    val = 2
+elif args.metric == "MAE":
+    maximizar = True
+    val = 3
+elif args.metric == "AMAE":
+    maximizar = True
+    val = 4
+elif args.metric == "MS":
+    val = 6
+elif args.metric == "GM":
+    val = 7
+elif args.metric == "MMAE":
+    maximizar = True
+    val = 8
 
-    shp_type = os.listdir(dir_results)
+shp_type = os.listdir(dir_results)
 
-    datasets = []
-    classifiers = []
-    for x, i in enumerate(shp_type):
-        # For every shp_type
-        dir_results_shp_type = dir_results + str(i) + '/'
-        classifiers.append(os.listdir(dir_results_shp_type))
-        for j in classifiers[x]:
-            dir_results_shp_type_classifier = dir_results_shp_type + str(j) + '/'
+datasets = []
+classifiers = []
+for x, i in enumerate(shp_type):
+    # For every shp_type
+    dir_results_shp_type = dir_results + str(i) + '/'
+    classifiers.append(os.listdir(dir_results_shp_type))
+    for j in classifiers[x]:
+        dir_results_shp_type_classifier = dir_results_shp_type + str(j) + '/'
 
-            # The datasets are extracted
-            datasets.append(set(os.listdir(dir_results_shp_type_classifier)))
+        # The datasets are extracted
+        datasets.append(set(os.listdir(dir_results_shp_type_classifier)))
 
-    datasets = set.intersection(*datasets)
+datasets = set.intersection(*datasets)
 
-    matrix = []
-    matrix.append(["classifier_name", "dataset_name", "metric"])
+matrix = []
+matrix.append(["classifier_name", "dataset_name", "metric"])
 
-    num_row = 1
-    for x, i in enumerate(shp_type):
-        for j in classifiers[x]:
-            for k in datasets:
-                dir_shp_clfs_dataset = dir_results + str(i) + "/" + str(j) + "/" + str(k) + "/Metrics/metrics.csv"
-                # Only interested in the accuracy, included in the usecols 1 and it is the second value.
-                # [2] ccr [3] mae [4] amae [5] wkappa [6] ms [7] gm [8] mmae [9] rspearman [10] tkendall
-                metric = np.genfromtxt(dir_shp_clfs_dataset, delimiter=',', usecols=range(2), invalid_raise = False)[val][1]
-                if maximizar:
-                    metric = (1/(1+metric))
-                matrix.append([str(i)+"_"+str(j), k, metric])
-    file_name = 'results_' + metricName + '.csv'
-    pd.DataFrame(matrix).to_csv(file_name, header=None, index=None)
+num_row = 1
+for x, i in enumerate(shp_type):
+    for j in classifiers[x]:
+        for k in datasets:
+            dir_shp_clfs_dataset = dir_results + str(i) + "/" + str(j) + "/" + str(k) + "/Metrics/metrics.csv"
+            # Only interested in the accuracy, included in the usecols 1 and it is the second value.
+            # [2] ccr [3] mae [4] amae [5] wkappa [6] ms [7] gm [8] mmae [9] rspearman [10] tkendall
+            metric = np.genfromtxt(dir_shp_clfs_dataset, delimiter=',', usecols=range(2), invalid_raise = False)[val][1]
+            if maximizar:
+            	metric = (1/(1+metric))
+            matrix.append([str(i)+"_"+str(j), k, metric])
 
-    df_perf = pd.read_csv(file_name, index_col=False)
-    draw_cd_diagram(df_perf=df_perf, fig_name='cd_diagram_' + metricName + '.png')
+pd.DataFrame(matrix).to_csv("results.csv", header=None, index=None)
+
+df_perf = pd.read_csv('results.csv', index_col=False)
+draw_cd_diagram(df_perf=df_perf)
 
