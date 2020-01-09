@@ -9,9 +9,10 @@ import numpy as np
 import pandas as pd
 import matplotlib
 
+import os
+
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 
 import operator
 import math
@@ -19,12 +20,10 @@ from scipy.stats import wilcoxon
 from scipy.stats import friedmanchisquare
 import networkx
 
-import os 
-
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument("--metric", "-m", type=str, default="MAE", help="Metric")
-args = parser.parse_args()
+#import argparse
+#parser = argparse.ArgumentParser()
+#parser.add_argument("--metric", "-m", type=str, default="AMAE", help="Metric")
+#args = parser.parse_args()
 
 # inspired from orange3 https://docs.orange.biolab.si/3/data-mining-library/reference/evaluation.cd.html
 def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, highv=None,
@@ -195,7 +194,6 @@ def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, hig
 
     def filter_names(name):
         return name
-
     def filter_avrank(avrank):
         return "{0:.4f}".format(avrank)
 
@@ -203,7 +201,10 @@ def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, hig
 
     for i in range(math.ceil(k / 2)):
         chei = cline + minnotsignificant + i * space_between_names
-        line([(rankpos(ssums[i]), cline), (rankpos(ssums[i]), chei), (textspace - 0.1, chei)], linewidth=linewidth)
+        line([(rankpos(ssums[i]), cline),
+              (rankpos(ssums[i]), chei),
+              (textspace - 0.1, chei)],
+             linewidth=linewidth)
         text(textspace - 0.2, chei, filter_names(nnames[i]), ha="right", va="center", size=16)
         text(textspace + 0.5, chei - 0.1, filter_avrank(avranks[i]), ha="right", va="center", size=11)
 
@@ -212,13 +213,14 @@ def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, hig
         line([(rankpos(ssums[i]), cline), (rankpos(ssums[i]), chei), (textspace + scalewidth + 0.1, chei)], linewidth=linewidth)
         text(textspace + scalewidth + 0.2, chei, filter_names(nnames[i]), ha="left", va="center", size=16)
         text(textspace + scalewidth - 0.5, chei - 0.1, filter_avrank(avranks[i]), ha="left", va="center", size=11)
-
     # no-significance lines
     def draw_lines(lines, side=0.05, height=0.1):
         start = cline + 0.2
 
         for l, r in lines:
-            line([(rankpos(ssums[l]) - side, start), (rankpos(ssums[r]) + side, start)], linewidth=linewidth_sign)
+            line([(rankpos(ssums[l]) - side, start),
+                  (rankpos(ssums[r]) + side, start)],
+                 linewidth=linewidth_sign)
             start += height
             print('drawing: ', l, r)
 
@@ -242,7 +244,9 @@ def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, hig
         if min_idx >= len(nnames) / 2 and achieved_half == False:
             start = cline + 0.25
             achieved_half = True
-        line([(rankpos(ssums[min_idx]) - side, start), (rankpos(ssums[max_idx]) + side, start)], linewidth=linewidth_sign)
+        line([(rankpos(ssums[min_idx]) - side, start),
+              (rankpos(ssums[max_idx]) + side, start)],
+             linewidth=linewidth_sign)
         start += height
 
 
@@ -265,7 +269,7 @@ def form_cliques(p_values, nnames):
     return networkx.find_cliques(g)
 
 
-def draw_cd_diagram(df_perf=None, alpha=0.05):
+def draw_cd_diagram(df_perf=None, alpha=0.05, name_figure='cd-diagram.png'):
     """
     Draws the critical difference diagram given the list of pairwise classifiers that are
     significant or not
@@ -279,7 +283,7 @@ def draw_cd_diagram(df_perf=None, alpha=0.05):
 
     graph_ranks(average_ranks.values, average_ranks.keys(), p_values, cd=None, reverse=True, width=9, textspace=1.5)
 
-    plt.savefig('cd-diagram.png',bbox_inches='tight')
+    plt.savefig(name_figure, bbox_inches='tight')
 
 def wilcoxon_holm(alpha=0.05, df_perf=None):
     """
@@ -288,21 +292,21 @@ def wilcoxon_holm(alpha=0.05, df_perf=None):
     """
     print(pd.unique(df_perf['classifier_name']))
     # count the number of tested datasets per classifier
-    df_counts = pd.DataFrame({'count': df_perf.groupby(['classifier_name']).size()}).reset_index()
-
+    df_counts = pd.DataFrame({'count': df_perf.groupby(
+        ['classifier_name']).size()}).reset_index()
     # get the maximum number of tested datasets
     max_nb_datasets = df_counts['count'].max()
     # get the list of classifiers who have been tested on nb_max_datasets
-    classifiers = list(df_counts.loc[df_counts['count'] == max_nb_datasets]['classifier_name'])
-
+    classifiers = list(df_counts.loc[df_counts['count'] == max_nb_datasets]
+                       ['classifier_name'])
     # test the null hypothesis using friedman before doing a post-hoc analysis
-    if(len(classifiers) >= 3):
-        friedman_p_value = friedmanchisquare(*(np.array(df_perf.loc[df_perf['classifier_name'] == c]['metric']) for c in classifiers))[1]
-    
-        if friedman_p_value >= alpha:
-            # then the null hypothesis over the entire classifiers cannot be rejected
-            print('the null hypothesis over the entire classifiers cannot be rejected')
-        # get the number of classifiers
+    friedman_p_value = friedmanchisquare(*(
+        np.array(df_perf.loc[df_perf['classifier_name'] == c]['metric'])
+        for c in classifiers))[1]
+    if friedman_p_value >= alpha:
+        # then the null hypothesis over the entire classifiers cannot be rejected
+        print('the null hypothesis over the entire classifiers cannot be rejected')
+    # get the number of classifiers
     m = len(classifiers)
     # init array that contains the p-values calculated by the Wilcoxon signed rank test
     p_values = []
@@ -311,7 +315,8 @@ def wilcoxon_holm(alpha=0.05, df_perf=None):
         # get the name of classifier one
         classifier_1 = classifiers[i]
         # get the performance of classifier one
-        perf_1 = np.array(df_perf.loc[df_perf['classifier_name'] == classifier_1]['metric'], dtype=np.float64)
+        perf_1 = np.array(df_perf.loc[df_perf['classifier_name'] == classifier_1]['metric']
+                          , dtype=np.float64)
         for j in range(i + 1, m):
             # get the name of the second classifier
             classifier_2 = classifiers[j]
@@ -345,8 +350,7 @@ def wilcoxon_holm(alpha=0.05, df_perf=None):
     rank_data = np.array(sorted_df_perf['metric']).reshape(m, max_nb_datasets)
 
     # create the data frame containg the accuracies
-    df_ranks = pd.DataFrame(data=rank_data, index=np.sort(classifiers), columns=
-    np.unique(sorted_df_perf['dataset_name']))
+    df_ranks = pd.DataFrame(data=rank_data, index=np.sort(classifiers), columns=np.unique(sorted_df_perf['dataset_name']))
 
     # number of wins
     dfff = df_ranks.rank(ascending=False)
@@ -357,60 +361,60 @@ def wilcoxon_holm(alpha=0.05, df_perf=None):
     # return the p-values and the average ranks
     return p_values, average_ranks, max_nb_datasets
 
-
-
 dir_results = "../results/"
-maximizar = False
 
-if args.metric == "CCR":
-    val = 2
-elif args.metric == "MAE":
-    maximizar = True
-    val = 3
-elif args.metric == "AMAE":
-    maximizar = True
-    val = 4
-elif args.metric == "MS":
-    val = 6
-elif args.metric == "GM":
-    val = 7
-elif args.metric == "MMAE":
-    maximizar = True
-    val = 8
+for metricName in ["CCR", "MAE", "AMAE", "GM", "MS"]:
 
-shp_type = os.listdir(dir_results)
+    maximizar = False
 
-datasets = []
-classifiers = []
-for x, i in enumerate(shp_type):
-    # For every shp_type
-    dir_results_shp_type = dir_results + str(i) + '/'
-    classifiers.append(os.listdir(dir_results_shp_type))
-    for j in classifiers[x]:
-        dir_results_shp_type_classifier = dir_results_shp_type + str(j) + '/'
+    if metricName == "CCR":
+        val = 2
+    elif metricName == "MAE":
+        maximizar = True
+        val = 3
+    elif metricName == "AMAE":
+        maximizar = True
+        val = 4
+    elif metricName == "MS":
+        val = 6
+    elif metricName == "GM":
+        val = 7
+    elif metricName == "MMAE":
+        maximizar = True
+        val = 8
 
-        # The datasets are extracted
-        datasets.append(set(os.listdir(dir_results_shp_type_classifier)))
+    shp_type = os.listdir(dir_results)
 
-datasets = set.intersection(*datasets)
+    datasets = []
+    classifiers = []
+    for x, i in enumerate(shp_type):
+        # For every shp_type
+        dir_results_shp_type = dir_results + str(i) + '/'
+        classifiers.append(os.listdir(dir_results_shp_type))
+        for j in classifiers[x]:
+            dir_results_shp_type_classifier = dir_results_shp_type + str(j) + '/'
 
-matrix = []
-matrix.append(["classifier_name", "dataset_name", "metric"])
+            # The datasets are extracted
+            datasets.append(set(os.listdir(dir_results_shp_type_classifier)))
 
-num_row = 1
-for x, i in enumerate(shp_type):
-    for j in classifiers[x]:
-        for k in datasets:
-            dir_shp_clfs_dataset = dir_results + str(i) + "/" + str(j) + "/" + str(k) + "/Metrics/metrics.csv"
-            # Only interested in the accuracy, included in the usecols 1 and it is the second value.
-            # [2] ccr [3] mae [4] amae [5] wkappa [6] ms [7] gm [8] mmae [9] rspearman [10] tkendall
-            metric = np.genfromtxt(dir_shp_clfs_dataset, delimiter=',', usecols=range(2), invalid_raise = False)[val][1]
-            if maximizar:
-            	metric = (1/(1+metric))
-            matrix.append([str(i)+"_"+str(j), k, metric])
+    datasets = set.intersection(*datasets)
 
-pd.DataFrame(matrix).to_csv("results.csv", header=None, index=None)
+    matrix = []
+    matrix.append(["classifier_name", "dataset_name", "metric"])
 
-df_perf = pd.read_csv('results.csv', index_col=False)
-draw_cd_diagram(df_perf=df_perf)
+    num_row = 1
+    for x, i in enumerate(shp_type):
+        for j in classifiers[x]:
+            for k in datasets:
+                dir_shp_clfs_dataset = dir_results + str(i) + "/" + str(j) + "/" + str(k) + "/Metrics/metrics.csv"
+                # Only interested in the accuracy, included in the usecols 1 and it is the second value.
+                # [2] ccr [3] mae [4] amae [5] wkappa [6] ms [7] gm [8] mmae [9] rspearman [10] tkendall
+                metric = np.genfromtxt(dir_shp_clfs_dataset, delimiter=',', usecols=range(2), invalid_raise = False)[val][1]
+                if maximizar:
+                    metric = (1/(1+metric))
+                matrix.append([str(i)+"_"+str(j), k, metric])
+    name_file = "results_" + metricName + ".csv"
+    pd.DataFrame(matrix).to_csv(name_file, header=None, index=None)
 
+    df_perf = pd.read_csv(name_file, index_col=False)
+    draw_cd_diagram(df_perf=df_perf, name_figure="cd_diagram_" + metricName + ".png")
