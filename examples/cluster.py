@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--timeseriesPath", "-t", type=str, default="/home/dguijo/ArtTSOC/timeseries/", help="Path to time series")
 parser.add_argument("--datasetPath", "-p", type=str, default="/home/dguijo/ArtTSOC/datasets/", help="Path to datasets")
 parser.add_argument("--datasetName", "-d", type=str, default="DistalPhalanxTW", help="Dataset name")
-parser.add_argument("--extractShapelets", "-e", type=bool, default=False, help="Boolean to extract or not the shapelets")
+parser.add_argument("--extractShapelets", "-e", type=bool, default=True, help="Boolean to extract or not the shapelets")
 parser.add_argument("--shp", "-s", type=str, default="Ordinal_1", help="Shapelet extraction approach used")
 parser.add_argument("--res", "-r", type=str, default="/home/dguijo/ArtTSOC/results/", help="Path to save the results")
 args = parser.parse_args()
@@ -48,19 +48,14 @@ def comparison_experiments(data_dir, res_dir, data_name, transform):
         "orboostall",
         "hpold",
     ]
-    
     complete_classifiers = [
         # Naive approaches
         "svr",
         "svc1va",
         "svc1v1",
-
-        # threshold methods
-        "pom",
         "svorex",
         "svorim",
     ]
-
     # Commented are non-deterministic.
     params = {
         # Naive approaches
@@ -86,7 +81,6 @@ def comparison_experiments(data_dir, res_dir, data_name, transform):
         "orboostall": [],
         "hpold": {'C': np.logspace(-3, 3, 7), 'k': np.logspace(-3, 3, 7)},
     }
-
     for c in complete_classifiers:
         print('Ordinal Classification Algorithm: ' + str(c))
         try:
@@ -113,11 +107,11 @@ def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type):
     trainY = trainY + 1
     testY = testY + 1
     if shp_type == "Standard":
-        shp = ContractedShapeletTransform(time_limit_in_mins=0.5, random_state=0)
+        shp = ContractedShapeletTransform(time_limit_in_mins=60, random_state=0)
     elif shp_type == "Ordinal_1":
-        shp = ContractedOrdinalShapeletTransform(time_limit_in_mins=0.5, random_state=0)
+        shp = ContractedOrdinalShapeletTransform(time_limit_in_mins=60, random_state=0)
     else:
-        shp = ContractedShapeletTransform(time_limit_in_mins=0.5, random_state=0)
+        shp = ContractedShapeletTransform(time_limit_in_mins=60, random_state=0)
     shp.fit(trainX, trainY)
 
     shapelets = shp.get_shapelets()

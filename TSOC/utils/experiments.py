@@ -49,7 +49,6 @@ def set_classifier(cls_name, eng):
 
 def load_datasets(data_dir, dset_name, transform, rtn_format='matlab'):
     # Read the train and test files
-    print(data_dir + dset_name + '/transform_' + str(transform) + '/' + dset_name + '_train.0')
     train = pd.read_csv(data_dir + dset_name + '/transform_' + str(transform) + '/' + dset_name + '_train.0', sep=' ', header=None)
     test = pd.read_csv(data_dir + dset_name + '/transform_' + str(transform) + '/' + dset_name + '_test.0', sep=' ', header=None)
 
@@ -75,7 +74,6 @@ def save_results(res_dir, cls_name, dset_name, classifier_info, metrics, transfo
 
     # Define the dir where all the results-related stuff is saved
     output_path = str(res_dir) + 'transform_' + str(transform) + '/' + str(cls_name) + '/' + str(dset_name) + '/'
-    print(output_path)
     metrics_path = output_path + 'Metrics/'
     predictions_path = output_path + 'Predictions/'
     hyperparams_path = output_path + 'Hyperparams/'

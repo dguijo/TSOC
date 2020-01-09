@@ -19,6 +19,8 @@ import heapq
 from operator import itemgetter
 from sktime.transformers.base import BaseTransformer
 
+from scipy.stats import linregress
+
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
@@ -267,7 +269,7 @@ class OrdinalShapeletTransform(BaseTransformer):
 
                 # only do if candidate was not rejected
                 if candidate_rejected is False:
-                    final_ig = OrdinalShapeletTransform.calc_fisher_ordinal(orderline)
+                    final_ig = OrdinalShapeletTransform.calc_correlation(orderline, y[series_id])
                     accepted_candidate = Shapelet(series_id, cand_start_pos, cand_len, final_ig, candidate)
 
                     # add to min heap to store shapelets for this class
@@ -460,7 +462,7 @@ class OrdinalShapeletTransform(BaseTransformer):
             return ent
 
     @staticmethod
-    def calc_fisher(orderline):
+    def calc_fisher_nominal(orderline):
 
         orderline = np.array(orderline)
 
@@ -494,6 +496,17 @@ class OrdinalShapeletTransform(BaseTransformer):
                 numerador += (np.abs(k - j) * np.power(media_distancias_k - media_distancias_j, 2))
 
         return numerador/((len(labels) - 1) * denominador)
+
+    @staticmethod
+    def calc_correlation(orderline, shp_class):
+
+        orderline = np.array(orderline)
+        print(orderline)
+        print(np.abs(orderline[:, 1] - shp_class))
+
+        slope, intercept, r_value, p_value, std_err = linregress(orderline[:, 0], np.abs(orderline[:, 1] - shp_class))
+
+        return r_value**2
 
     # could cythonise
     @staticmethod
