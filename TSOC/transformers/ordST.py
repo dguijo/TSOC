@@ -20,6 +20,7 @@ from operator import itemgetter
 from sktime.transformers.base import BaseTransformer
 
 from scipy.stats import linregress
+from sklearn.metrics import r2_score
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -261,7 +262,13 @@ class OrdinalShapeletTransform(BaseTransformer):
                         start_left-=1
                         start_right+=1
 
-                    orderline.append((bsf_dist,y[i]))
+                    orderline.append((bsf_dist, y[i]))
+
+                    if len(orderline) > 2:
+                        corr_upper_bound = OrdinalShapeletTransform.calc_early_correlation(orderline, y[series_id], cases_to_visit)
+                        if corr_upper_bound <= ig_cutoff:
+                            candidate_rejected = True
+                            break
 
                 candidates_evaluated += 1
                 if self.verbose > 3 and candidates_evaluated % 100 == 0:
@@ -501,12 +508,29 @@ class OrdinalShapeletTransform(BaseTransformer):
     def calc_correlation(orderline, shp_class):
 
         orderline = np.array(orderline)
-        print(orderline)
-        print(np.abs(orderline[:, 1] - shp_class))
+        r2_value = r2_score(orderline[:, 0], np.abs(orderline[:, 1] - shp_class))
 
-        slope, intercept, r_value, p_value, std_err = linregress(orderline[:, 0], np.abs(orderline[:, 1] - shp_class))
+        return r2_value
 
-        return r_value**2
+    @staticmethod
+    def calc_early_correlation(orderline, shp_class, y):
+
+        orderline = np.array(orderline)
+
+        y = list(dict(y).values()) #extract classes in the correct order of round robin
+
+        if len(orderline) < len(y):
+            orderline_aux = np.vstack((orderline, np.zeros((len(y) - len(orderline), 2))))
+
+            for i in range(len(orderline), len(y)):
+                orderline_aux[i, :] = [np.abs(y[i] - shp_class), y[i]]
+
+        else:
+            orderline_aux = orderline
+        r2_value = r2_score(orderline_aux[:, 0], np.abs(orderline_aux[:, 1] - shp_class))
+
+        return r2_value
+
 
     # could cythonise
     @staticmethod
