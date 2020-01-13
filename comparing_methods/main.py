@@ -27,7 +27,7 @@ import networkx
 
 # inspired from orange3 https://docs.orange.biolab.si/3/data-mining-library/reference/evaluation.cd.html
 def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, highv=None,
-                width=6, textspace=1, reverse=False, filename=None, **kwargs):
+                width=6, textspace=1, reverse=False, filename=None, metric=None, **kwargs):
     """
     Draws a CD graph, which is used to display  the differences in methods'
     performance. See Janez Demsar, Statistical Comparisons of Classifiers over
@@ -249,6 +249,8 @@ def graph_ranks(avranks, names, p_values, cd=None, cdmethod=None, lowv=None, hig
              linewidth=linewidth_sign)
         start += height
 
+    ax.set_title(metric)
+
 
 def form_cliques(p_values, nnames):
     """
@@ -269,7 +271,7 @@ def form_cliques(p_values, nnames):
     return networkx.find_cliques(g)
 
 
-def draw_cd_diagram(df_perf=None, alpha=0.05, name_figure='cd-diagram.png'):
+def draw_cd_diagram(df_perf=None, alpha=0.05, name_figure='cd-diagram.png', metric=None):
     """
     Draws the critical difference diagram given the list of pairwise classifiers that are
     significant or not
@@ -281,7 +283,7 @@ def draw_cd_diagram(df_perf=None, alpha=0.05, name_figure='cd-diagram.png'):
     for p in p_values:
         print(p)
 
-    graph_ranks(average_ranks.values, average_ranks.keys(), p_values, cd=None, reverse=True, width=9, textspace=1.5)
+    graph_ranks(average_ranks.values, average_ranks.keys(), p_values, cd=None, reverse=True, width=9, textspace=1.5, metric=metric)
 
     plt.savefig(name_figure, bbox_inches='tight')
 
@@ -417,4 +419,4 @@ for metricName in ["CCR", "MAE", "AMAE", "GM", "MS"]:
     pd.DataFrame(matrix).to_csv(name_file, header=None, index=None)
 
     df_perf = pd.read_csv(name_file, index_col=False)
-    draw_cd_diagram(df_perf=df_perf, name_figure="cd_diagram_" + metricName + ".png")
+    draw_cd_diagram(df_perf=df_perf, name_figure="cd_diagram_" + metricName + ".png", metric=metricName)

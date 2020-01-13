@@ -16,7 +16,7 @@ from sklearn.preprocessing import LabelEncoder
 parser = argparse.ArgumentParser()
 parser.add_argument("--timeseriesPath", "-t", type=str, default="/home/david/TSOC/timeseries/", help="Path to time series")
 parser.add_argument("--datasetPath", "-p", type=str, default="/home/david/TSOC/datasets/", help="Path to datasets")
-parser.add_argument("--datasetName", "-d", type=str, default="DistalPhalanxTW", help="Dataset name")
+parser.add_argument("--datasetName", "-d", type=str, default="MiddlePhalanxTW", help="Dataset name")
 parser.add_argument("--extractShapelets", "-e", type=bool, default=True, help="Boolean to extract or not the shapelets")
 parser.add_argument("--shp", "-s", type=str, default="Ordinal_1", help="Shapelet extraction approach used")
 parser.add_argument("--res", "-r", type=str, default="/home/david/TSOC/results/", help="Path to save the results")
@@ -123,6 +123,28 @@ def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type):
     trainX, trainY = load_ts(timeseries_dir + data_name + '/' + data_name + '_TRAIN.ts')
     testX, testY = load_ts(timeseries_dir + data_name + '/' + data_name + '_TEST.ts')
 
+    """
+    # PARA CALCULAR IR 
+    le = LabelEncoder()
+    trainY = le.fit_transform(trainY)
+    testY = le.transform(testY)
+    trainY = trainY + 1
+    testY = testY + 1
+    etiquetas = np.concatenate((trainY, testY))
+    classes, counter = np.unique(etiquetas, return_counts=True)
+    print(classes)
+    print(counter)
+    IR_q = 0
+    for idx, i in enumerate(classes):
+        numerador = 0
+        for jdx, j in enumerate(classes):
+            if j != i:
+                numerador += counter[jdx]
+        IR_q += numerador / (len(classes) * counter[idx])
+    IR = IR_q / len(classes)
+    print(IR)
+    quit()
+    """
     # Encoding of the labels from 1 to num_classes of the dataset.
     le = LabelEncoder()
     trainY = le.fit_transform(trainY)
