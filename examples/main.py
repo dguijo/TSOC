@@ -154,7 +154,7 @@ def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type):
     if shp_type == "Standard":
         shp = ContractedShapeletTransform(time_limit_in_mins=0.5, random_state=0)
     elif shp_type == "Ordinal_1":
-        shp = ContractedOrdinalShapeletTransform(time_limit_in_mins=0.5, random_state=0)
+        shp = ContractedOrdinalShapeletTransform(time_limit_in_mins=10, random_state=0)
     else:
         shp = ContractedShapeletTransform(time_limit_in_mins=0.5, random_state=0)
     shp.fit(trainX, trainY)

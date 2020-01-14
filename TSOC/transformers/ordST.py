@@ -18,6 +18,7 @@ from sktime.utils.load_data import load_from_tsfile_to_dataframe
 import heapq
 from operator import itemgetter
 from sktime.transformers.base import BaseTransformer
+from scipy.stats import spearmanr
 
 from scipy.stats import linregress
 from sklearn.metrics import r2_score
@@ -72,7 +73,7 @@ class OrdinalShapeletTransform(BaseTransformer):
         self.random_state = random_state
         self.verbose = verbose
         self.remove_self_similar = remove_self_similar
-        self.predefined_ig_rejection_level = 0.05
+        self.predefined_ig_rejection_level = 0.0
         self.shapelets = None
 
     def fit(self, X, y=None):
@@ -264,19 +265,20 @@ class OrdinalShapeletTransform(BaseTransformer):
 
                     orderline.append((bsf_dist, y[i]))
 
+                    """
                     if len(orderline) > 2:
                         corr_upper_bound = OrdinalShapeletTransform.calc_early_correlation(orderline, y[series_id], cases_to_visit)
                         if corr_upper_bound <= ig_cutoff:
                             candidate_rejected = True
                             break
-
+                    """
                 candidates_evaluated += 1
                 if self.verbose > 3 and candidates_evaluated % 100 == 0:
                     print("candidates evaluated: " + str(candidates_evaluated))
 
                 # only do if candidate was not rejected
                 if candidate_rejected is False:
-                    final_ig = OrdinalShapeletTransform.calc_correlation(orderline, y[series_id])
+                    final_ig = OrdinalShapeletTransform.calc_spearman(orderline, y[series_id])
                     accepted_candidate = Shapelet(series_id, cand_start_pos, cand_len, final_ig, candidate)
 
                     # add to min heap to store shapelets for this class
@@ -330,7 +332,7 @@ class OrdinalShapeletTransform(BaseTransformer):
             by_class_descending_ig = sorted(shapelet_heaps_by_class[class_val].get_array(), key=itemgetter(0), reverse=True)
 
             if self.remove_self_similar and len(by_class_descending_ig) > 0:
-                by_class_descending_ig = OrdinalShapeletTransform.remove_self_similar_shapelets(by_class_descending_ig)
+                by_class_descending_ig = OrdinalShapeletTransform.remove_self_similar_shapelets(by_class_descending_ig, X)
             else:
                 # need to extract shapelets from tuples
                 by_class_descending_ig = [x[2] for x in by_class_descending_ig]
@@ -345,7 +347,7 @@ class OrdinalShapeletTransform(BaseTransformer):
         self.shapelets.sort(key=lambda x:x.info_gain, reverse=True)
 
     @staticmethod
-    def remove_self_similar_shapelets(shapelet_list):
+    def remove_self_similar_shapelets(shapelet_list, X):
         """Remove self-similar shapelets from an input list. Note: this method assumes
         that shapelets are pre-sorted in descending order of quality (i.e. if two candidates
         are self-similar, the one with the later index will be removed)
@@ -366,17 +368,27 @@ class OrdinalShapeletTransform(BaseTransformer):
             # not self similar if from different series
             if shapelet_one.series_id != shapelet_two.series_id:
                 return False
-
             if (shapelet_one.start_pos >= shapelet_two.start_pos) and (shapelet_one.start_pos <= shapelet_two.start_pos + shapelet_two.length):
                 return True
             if (shapelet_two.start_pos >= shapelet_one.start_pos) and (shapelet_two.start_pos <= shapelet_one.start_pos + shapelet_one.length):
                 return True
+        """
+        def is_same_shapelet(shapelet_one, shapelet_two, X):
+            shp_one = X[shapelet_one.series_id][:, shapelet_one.start_pos: shapelet_one.start_pos + shapelet_one.length]
+            shp_two = X[shapelet_two.series_id][:, shapelet_two.start_pos: shapelet_two.start_pos + shapelet_two.length]
 
+            if np.array_equal(shp_one, shp_two):
+                print(shp_one)
+                print(shp_two)
+                return True
+        """
         # [s][2] will be a tuple with (info_gain,id,Shapelet), so we need to access [2]
         to_return = [shapelet_list[0][2]]  # first shapelet must be ok
+
         for s in range(1, len(shapelet_list)):
             can_add = True
             for c in range(0, s):
+                #if is_self_similar(shapelet_list[s][2], shapelet_list[c][2]) or is_same_shapelet(shapelet_list[s][2], shapelet_list[c][2], X):
                 if is_self_similar(shapelet_list[s][2], shapelet_list[c][2]):
                     can_add = False
                     break
@@ -531,6 +543,11 @@ class OrdinalShapeletTransform(BaseTransformer):
 
         return r2_value
 
+    @staticmethod
+    def calc_spearman(orderline, shp_class):
+        orderline = np.array(orderline)
+        corr_spearman, _ = spearmanr(orderline[:, 0], np.abs(orderline[:, 1] - shp_class))
+        return corr_spearman
 
     # could cythonise
     @staticmethod
@@ -713,8 +730,7 @@ class ContractedOrdinalShapeletTransform(OrdinalShapeletTransform):
         self.random_state = random_state
         self.verbose = verbose
         self.remove_self_similar = remove_self_similar
-
-        self.predefined_ig_rejection_level = 0.05
+        self.predefined_ig_rejection_level = 0.0
         self.shapelets = None
 
 
