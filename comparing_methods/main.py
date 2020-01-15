@@ -326,7 +326,7 @@ def wilcoxon_holm(alpha=0.05, df_perf=None):
             perf_2 = np.array(df_perf.loc[df_perf['classifier_name'] == classifier_2]
                               ['metric'], dtype=np.float64)
             # calculate the p_value
-            p_value = wilcoxon(perf_1, perf_2, zero_method='pratt')[1]
+            p_value = wilcoxon(perf_1, perf_2, zero_method='zsplit')[1]
             # appen to the list
             p_values.append((classifier_1, classifier_2, p_value, False))
     # get the number of hypothesis
