@@ -16,7 +16,7 @@ from sklearn.preprocessing import LabelEncoder
 parser = argparse.ArgumentParser()
 parser.add_argument("--timeseriesPath", "-t", type=str, default="/home/david/TSOC/timeseries/", help="Path to time series")
 parser.add_argument("--datasetPath", "-p", type=str, default="/home/david/TSOC/datasets/", help="Path to datasets")
-parser.add_argument("--datasetName", "-d", type=str, default="MiddlePhalanxTW", help="Dataset name")
+parser.add_argument("--datasetName", "-d", type=str, default="ProximalPhalanxTW", help="Dataset name")
 parser.add_argument("--extractShapelets", "-e", type=bool, default=True, help="Boolean to extract or not the shapelets")
 parser.add_argument("--shp", "-s", type=str, default="Ordinal_1", help="Shapelet extraction approach used")
 parser.add_argument("--res", "-r", type=str, default="/home/david/TSOC/results/", help="Path to save the results")
@@ -154,7 +154,7 @@ def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type):
     if shp_type == "Standard":
         shp = ContractedShapeletTransform(time_limit_in_mins=0.5, random_state=0)
     elif shp_type == "Ordinal_1":
-        shp = ContractedOrdinalShapeletTransform(time_limit_in_mins=10, random_state=0)
+        shp = ContractedOrdinalShapeletTransform(time_limit_in_mins=60, random_state=0)
     else:
         shp = ContractedShapeletTransform(time_limit_in_mins=0.5, random_state=0)
     shp.fit(trainX, trainY)

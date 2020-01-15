@@ -332,7 +332,7 @@ class OrdinalShapeletTransform(BaseTransformer):
             by_class_descending_ig = sorted(shapelet_heaps_by_class[class_val].get_array(), key=itemgetter(0), reverse=True)
 
             if self.remove_self_similar and len(by_class_descending_ig) > 0:
-                by_class_descending_ig = OrdinalShapeletTransform.remove_self_similar_shapelets(by_class_descending_ig, X)
+                by_class_descending_ig = OrdinalShapeletTransform.remove_self_similar_shapelets(by_class_descending_ig)
             else:
                 # need to extract shapelets from tuples
                 by_class_descending_ig = [x[2] for x in by_class_descending_ig]
@@ -347,7 +347,7 @@ class OrdinalShapeletTransform(BaseTransformer):
         self.shapelets.sort(key=lambda x:x.info_gain, reverse=True)
 
     @staticmethod
-    def remove_self_similar_shapelets(shapelet_list, X):
+    def remove_self_similar_shapelets(shapelet_list):
         """Remove self-similar shapelets from an input list. Note: this method assumes
         that shapelets are pre-sorted in descending order of quality (i.e. if two candidates
         are self-similar, the one with the later index will be removed)
@@ -372,23 +372,13 @@ class OrdinalShapeletTransform(BaseTransformer):
                 return True
             if (shapelet_two.start_pos >= shapelet_one.start_pos) and (shapelet_two.start_pos <= shapelet_one.start_pos + shapelet_one.length):
                 return True
-        """
-        def is_same_shapelet(shapelet_one, shapelet_two, X):
-            shp_one = X[shapelet_one.series_id][:, shapelet_one.start_pos: shapelet_one.start_pos + shapelet_one.length]
-            shp_two = X[shapelet_two.series_id][:, shapelet_two.start_pos: shapelet_two.start_pos + shapelet_two.length]
 
-            if np.array_equal(shp_one, shp_two):
-                print(shp_one)
-                print(shp_two)
-                return True
-        """
         # [s][2] will be a tuple with (info_gain,id,Shapelet), so we need to access [2]
         to_return = [shapelet_list[0][2]]  # first shapelet must be ok
 
         for s in range(1, len(shapelet_list)):
             can_add = True
             for c in range(0, s):
-                #if is_self_similar(shapelet_list[s][2], shapelet_list[c][2]) or is_same_shapelet(shapelet_list[s][2], shapelet_list[c][2], X):
                 if is_self_similar(shapelet_list[s][2], shapelet_list[c][2]):
                     can_add = False
                     break
