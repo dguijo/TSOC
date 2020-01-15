@@ -29,28 +29,4 @@ do
 	done
 done
 
-dir=/home/dguijo/ArtTSOC/Outputs_FisherOrd/
-mkdir -p $dir;
-
-for dataset in ${datasets[@]:0:7}
-do
-	for semilla in {0..9}
-	do
-		output="$dataset"
-		nohup python -u cluster.py -t "/home/dguijo/ArtTSOC/timeseries/" -p "/home/dguijo/ArtTSOC/datasets" -r "/home/dguijo/ArtTSOC/results" -s "FisherOrd" -d $dataset -n $semilla > "$dir$output" &
-	done
-done
-
-dir=/home/dguijo/ArtTSOC/Outputs_Spearman/
-mkdir -p $dir;
-
-for dataset in ${datasets[@]:0:7}
-do
-	for semilla in {0..9}
-	do
-		output="$dataset"
-		nohup python -u cluster.py -t "/home/dguijo/ArtTSOC/timeseries/" -p "/home/dguijo/ArtTSOC/datasets" -r "/home/dguijo/ArtTSOC/results" -s "Spearman" -d $dataset -n $semilla > "$dir$output" &
-	done
-done
-
 conda deactivate
