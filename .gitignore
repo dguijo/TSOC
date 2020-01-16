@@ -134,3 +134,5 @@ results*
 results_60*
 datasets*
 timeseries*
+results.zip
+collate.py
