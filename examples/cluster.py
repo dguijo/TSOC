@@ -3,7 +3,9 @@ import argparse
 import sys
 import TSOC.utils.experiments as exp
 from TSOC.utils.shapelets import writeShapeletsToCSV
-from TSOC.transformers.ordST import ContractedOrdinalShapeletTransform
+from TSOC.transformers.ordST_FisherOrd import ContractedOrdinalShapeletTransformFisherOrd
+from TSOC.transformers.ordST_RegLin import ContractedOrdinalShapeletTransformRegLin
+from TSOC.transformers.ordST_Spearman import ContractedOrdinalShapeletTransformSpearman
 from sktime.transformers.shapelets import ContractedShapeletTransform
 import numpy as np
 import os
@@ -15,11 +17,12 @@ from sklearn.preprocessing import LabelEncoder
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--timeseriesPath", "-t", type=str, default="/home/dguijo/ArtTSOC/timeseries/", help="Path to time series")
-parser.add_argument("--datasetPath", "-p", type=str, default="/home/dguijo/ArtTSOC/datasets/", help="Path to datasets")
+parser.add_argument("--datasetPath", "-p", type=str, default="/home/dguijo/ArtTSOC/datasets", help="Path to datasets")
 parser.add_argument("--datasetName", "-d", type=str, default="DistalPhalanxTW", help="Dataset name")
 parser.add_argument("--extractShapelets", "-e", type=bool, default=True, help="Boolean to extract or not the shapelets")
 parser.add_argument("--shp", "-s", type=str, default="Ordinal_1", help="Shapelet extraction approach used")
-parser.add_argument("--res", "-r", type=str, default="/home/dguijo/ArtTSOC/results/", help="Path to save the results")
+parser.add_argument("--res", "-r", type=str, default="/home/dguijo/ArtTSOC/results", help="Path to save the results")
+parser.add_argument("--seed", "-n", type=int, default=0, help="Seed for the random state")
 args = parser.parse_args()
 
 
@@ -96,7 +99,7 @@ def comparison_experiments(data_dir, res_dir, data_name, transform):
             print('\n\n FAILED: ', sys.exc_info()[0], '\n\n')
 
 
-def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type):
+def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type, seed):
     trainX, trainY = load_ts(timeseries_dir + data_name + '/' + data_name + '_TRAIN.ts')
     testX, testY = load_ts(timeseries_dir + data_name + '/' + data_name + '_TEST.ts')
 
@@ -107,17 +110,21 @@ def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type):
     trainY = trainY + 1
     testY = testY + 1
     if shp_type == "Standard":
-        shp = ContractedShapeletTransform(time_limit_in_mins=60, random_state=0)
-    elif shp_type == "Ordinal_1":
-        shp = ContractedOrdinalShapeletTransform(time_limit_in_mins=60, random_state=0)
+        shp = ContractedShapeletTransform(time_limit_in_mins=60, random_state=seed)
+    elif shp_type == "Spearman":
+        shp = ContractedOrdinalShapeletTransformSpearman(time_limit_in_mins=60, random_state=seed)
+    elif shp_type == "RegLin":
+        shp = ContractedOrdinalShapeletTransformRegLin(time_limit_in_mins=60, random_state=seed)
+    elif shp_type == "FisherOrd":
+        shp = ContractedOrdinalShapeletTransformFisherOrd(time_limit_in_mins=60, random_state=seed)
     else:
-        shp = ContractedShapeletTransform(time_limit_in_mins=60, random_state=0)
+        shp = ContractedShapeletTransform(time_limit_in_mins=60, random_state=seed)
     shp.fit(trainX, trainY)
 
     shapelets = shp.get_shapelets()
     writeShapeletsToCSV(shapelets, 60, data_dir + '/' + data_name + '/' + data_name + '_shapelets.csv')
 
-    for i in range(70, 110, 10):
+    for i in range(90, 110, 10):
         directory = data_dir + '/' + data_name + '/' + 'transform_' + str(i) + '/'
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -135,16 +142,17 @@ def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type):
 if __name__ == "__main__":
     print("Dataset: " + args.datasetName)
     print("Shapelet Extraction Procedure: " + args.shp)
+    print("Semilla: " + str(args.seed))
 
-    final_dataset_path = args.datasetPath + args.shp
-    final_results_path = args.res + args.shp + '/'
+    final_dataset_path = args.datasetPath + '_' + str(args.seed) + '/' + args.shp
+    final_results_path = args.res + '_' + str(args.seed) + '/' + args.shp + '/'
 
     if args.extractShapelets:
-        shapelet_extraction(args.timeseriesPath, final_dataset_path, args.datasetName, args.shp)
+        shapelet_extraction(args.timeseriesPath, final_dataset_path, args.datasetName, args.shp, int(args.seed))
     else:
         final_existing_shapelets_path = final_dataset_path + '/' + args.datasetName + '/' + args.datasetName
         if (not os.path.exists(final_existing_shapelets_path + '_shapelets.csv')):
             raise FileNotFoundError("Shapelets and transform not found. Please run with -e True")
 
-    for i in range(70, 110, 10):
+    for i in range(90, 110, 10):
         comparison_experiments(final_dataset_path + '/', final_results_path, args.datasetName, i)

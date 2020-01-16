@@ -130,7 +130,7 @@ dmypy.json
 orca-master/
 
 # Results
-results/
-results_60/
-datasets/
-timeseries/
+results*
+results_60*
+datasets*
+timeseries*
