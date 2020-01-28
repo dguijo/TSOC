@@ -137,3 +137,8 @@ timeseries*
 results.zip
 collate.py
 examples/script*
+examples/cluster*
+
+comparing_results/
+documentation/
+collate_results/
