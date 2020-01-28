@@ -53,6 +53,6 @@ The paper regarding time series ordinal classification via shapelets has been su
 
 #### TSOC via shapelets
 
-* David Guijo-Rubio (@dguijo)
-* Pedro Antonio Gutiérrez (@pagutierrez)
-* Anthony Bagnall(@TonyBagnall)
+* David Guijo-Rubio ([@dguijo](https://github.com/dguijo))
+* Pedro Antonio Gutiérrez ([@pagutierrez](https://github.com/pagutierrez))
+* Anthony Bagnall ([@TonyBagnall](https://github.com/TonyBagnall))
