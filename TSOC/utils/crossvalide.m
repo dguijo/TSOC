@@ -1,7 +1,8 @@
 function [bestParam] = crossvalide(algorithmObj, train, kFold, params, param_names)
 %CROSSVALIDE Function to perform automatic crossvalidation based on the train set
     CVO = cvpartition(train.targets,'KFold',kFold);
-    bestmetric = 0;
+    %disp(CVO);
+    bestmetric = Inf;
     bestParam = [];
     for i=1:length(params)
         param = struct();
@@ -16,15 +17,20 @@ function [bestParam] = crossvalide(algorithmObj, train, kFold, params, param_nam
             trainCV.targets = train.targets(trIdx, :);
             testCV.patterns = train.patterns(teIdx, :);
             testCV.targets = train.targets(teIdx, :);
+            %disp("He llegado hasta el fitpredict");
+            %save('train.mat', 'trainCV', '-mat');
+            %save('test.mat', 'testCV', '-mat');
             info = algorithmObj.fitpredict(trainCV, testCV, param);
-            metric = metric + (1/(1+AMAE.calculateMetric(testCV.targets, info.predictedTest)));
+            %disp("He pasado el fitpredict");
+            metric = metric + AMAE.calculateMetric(testCV.targets, info.predictedTest);
         end
         metric = metric / kFold;
-        %fprintf('metric: %f, Minimum Sensitivity: %f\n', accuracy, MS.calculateMetric(testCV.targets,info.predictedTest));
-        %disp(param)
-        if metric > bestmetric
+        %fprintf('metric: %f\n', metric);
+        %disp(param);
+        if metric < bestmetric
             bestmetric = metric;
             bestParam = param;
         end
     end
+    %disp("-----------------------------------------------------")
 end

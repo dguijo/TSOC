@@ -3,9 +3,7 @@ import argparse
 import sys
 import TSOC.utils.experiments as exp
 from TSOC.utils.shapelets import writeShapeletsToCSV
-from TSOC.transformers.ordST_FisherOrd import ContractedOrdinalShapeletTransformFisherOrd
-from TSOC.transformers.ordST_RegLin import ContractedOrdinalShapeletTransformRegLin
-from TSOC.transformers.ordST_Spearman import ContractedOrdinalShapeletTransformSpearman
+from TSOC.transformers.ordST import ContractedOrdinalShapeletTransform
 from sktime.transformers.shapelets import ContractedShapeletTransform
 import numpy as np
 import os
@@ -20,7 +18,7 @@ parser.add_argument("--timeseriesPath", "-t", type=str, default="/home/david/TSO
 parser.add_argument("--datasetPath", "-p", type=str, default="/home/david/TSOC/datasets", help="Path to datasets")
 parser.add_argument("--datasetName", "-d", type=str, default="DistalPhalanxTW", help="Dataset name")
 parser.add_argument("--extractShapelets", "-e", type=bool, default=True, help="Boolean to extract or not the shapelets")
-parser.add_argument("--shp", "-s", type=str, default="Ordinal_1", help="Shapelet extraction approach used")
+parser.add_argument("--shp", "-s", type=str, default="Spearman", help="Shapelet extraction approach used")
 parser.add_argument("--res", "-r", type=str, default="/home/david/TSOC/results", help="Path to save the results")
 parser.add_argument("--seed", "-n", type=int, default=0, help="Seed for the random state")
 args = parser.parse_args()
@@ -156,14 +154,8 @@ def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type, seed):
     testY = testY + 1
     if shp_type == "Standard":
         shp = ContractedShapeletTransform(time_limit_in_mins=0.1, random_state=seed)
-    elif shp_type == "Spearman":
-        shp = ContractedOrdinalShapeletTransformSpearman(time_limit_in_mins=0.1, random_state=seed)
-    elif shp_type == "RegLin":
-        shp = ContractedOrdinalShapeletTransformRegLin(time_limit_in_mins=0.1, random_state=seed)
-    elif shp_type == "FisherOrd":
-        shp = ContractedOrdinalShapeletTransformFisherOrd(time_limit_in_mins=0.1, random_state=seed)
     else:
-        shp = ContractedShapeletTransform(time_limit_in_mins=0.1, random_state=seed)
+        shp = ContractedOrdinalShapeletTransform(time_limit_in_mins=0.1, quality=shp_type, random_state=seed)
     shp.fit(trainX, trainY)
 
     shapelets = shp.get_shapelets()
@@ -188,6 +180,9 @@ if __name__ == "__main__":
     print("Dataset: " + args.datasetName)
     print("Shapelet Extraction Procedure: " + args.shp)
     print("Semilla: " + str(args.seed))
+
+    if args.shp not in ["Standard", "RegLin", "OrdFisher", "Spearman"]:
+        raise ModuleNotFoundError("The shapelet quality measure is not implemented yet.")
 
     final_dataset_path = args.datasetPath + '_' + str(args.seed) + '/' + args.shp
     final_results_path = args.res + '_' + str(args.seed) + '/' + args.shp + '/'

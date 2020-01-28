@@ -136,3 +136,4 @@ datasets*
 timeseries*
 results.zip
 collate.py
+examples/script*

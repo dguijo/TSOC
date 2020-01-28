@@ -363,9 +363,12 @@ def wilcoxon_holm(alpha=0.05, df_perf=None):
     # return the p-values and the average ranks
     return p_values, average_ranks, max_nb_datasets
 
-dir_results = "../results/"
+dir_results = "../results_0/"
+shp_type = ["Standard", "RegLin", "FisherOrd", "Spearman"]
+datasets = ["DistalPhalanxOutlineAgeGroup", "DistalPhalanxTW", "EthanolLevel", "MiddlePhalanxOutlineAgeGroup", "MiddlePhalanxTW", "ProximalPhalanxOutlineAgeGroup", "ProximalPhalanxTW"]
+classifiers = ["svc1v1", "svc1va", "svorim", "svorex", "svr"]
 
-for metricName in ["CCR", "MAE", "AMAE", "GM", "MS"]:
+for metricName in ["CCR", "GM", "MAE", "AMAE"]:
 
     maximizar = False
 
@@ -385,38 +388,27 @@ for metricName in ["CCR", "MAE", "AMAE", "GM", "MS"]:
         maximizar = True
         val = 8
 
-    shp_type = os.listdir(dir_results)
-
-    datasets = []
-    classifiers = []
-    for x, i in enumerate(shp_type):
-        # For every shp_type
-        dir_results_shp_type = dir_results + str(i) + '/'
-        classifiers.append(os.listdir(dir_results_shp_type))
-        for j in classifiers[x]:
-            dir_results_shp_type_classifier = dir_results_shp_type + str(j) + '/'
-
-            # The datasets are extracted
-            datasets.append(set(os.listdir(dir_results_shp_type_classifier)))
-
-    datasets = set.intersection(*datasets)
-
     matrix = []
     matrix.append(["classifier_name", "dataset_name", "metric"])
 
     num_row = 1
-    for x, i in enumerate(shp_type):
-        for j in classifiers[x]:
+
+    for j in classifiers:
+        for x, i in enumerate(shp_type):
             for k in datasets:
-                dir_shp_clfs_dataset = dir_results + str(i) + "/" + str(j) + "/" + str(k) + "/Metrics/metrics.csv"
+                if i == "Standard":
+                    transform = "/transform_100/"
+                else:
+                    transform = "/transform_90/"
+                dir_shp_clfs_dataset = dir_results + str(i) + transform + str(j) + "/" + str(k) + "/Metrics/metrics.csv"
                 # Only interested in the accuracy, included in the usecols 1 and it is the second value.
                 # [2] ccr [3] mae [4] amae [5] wkappa [6] ms [7] gm [8] mmae [9] rspearman [10] tkendall
                 metric = np.genfromtxt(dir_shp_clfs_dataset, delimiter=',', usecols=range(2), invalid_raise = False)[val][1]
                 if maximizar:
-                    metric = (1/(1+metric))
-                matrix.append([str(i)+"_"+str(j), k, metric])
-    name_file = "results_" + metricName + ".csv"
+                    metric = -metric
+                matrix.append([str(j.upper()), k + "_" + i, metric])
+    name_file = "results_clf_" + metricName + ".csv"
     pd.DataFrame(matrix).to_csv(name_file, header=None, index=None)
 
     df_perf = pd.read_csv(name_file, index_col=False)
-    draw_cd_diagram(df_perf=df_perf, name_figure="cd_diagram_" + metricName + ".png", metric=metricName)
+    draw_cd_diagram(df_perf=df_perf, name_figure="clf_" + metricName + ".png", metric=metricName, alpha=0.05)
