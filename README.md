@@ -1,12 +1,58 @@
 # Time series ordinal classification via shapelets
-This repository holds the code described in the manuscript submitted to International Joint Conference on Neural Networks (IJCNN2020):
 
-**Time series ordinal classification via shapelets**
+## Algorithms included
 
-You can run the experiments on each of the datasets with:
+This repo includes different shapelet quality measures trying to boost the order information by refining the quality measure. These are:
 
-```sh
-python examples/main.py
-```
+* Ordinal Fisher.
+* Pearson's correlation coefficient.
+* Spearman's correlation coefficient.
 
-Inside this file, the main options could be set. 
+## Installation
+
+### Dependencies
+
+This repo basically requires:
+
+ * Python (>= 3.6.8)
+ * NumPy (>= 1.16.4)
+ * SciPy (>= 1.3.0)
+ * sktime (>= 0.3.0)
+ * Pandas (>=0.24.2)
+ * Scikit-learn (>=0.21.2)
+
+ Moreover, the Ordinal Regression and Classification Algorithms repository [ORCA](https://github.com/ayrna/orca) should also be installed.
+
+### Compilation
+
+To install the requirements, use:
+
+    pip install -r requirements.txt
+
+Note that the MATLAB engine for python should be installed following these [instructions](https://uk.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html). Moreover, ORCA can be installed from its [GitHub repo](https://github.com/ayrna/orca).
+
+## Development
+
+Contributions are welcome. Pull requests are encouraged to be formatted according to [PEP8](https://www.python.org/dev/peps/pep-0008/), e.g., using [yapf](https://github.com/google/yapf).
+
+## Usage
+
+Follow the example exposed in main.py, use:
+
+    python main.py -t path_to_datasets/ -p path_to_save_intermediate_files -r path_to_save_results
+
+Note that the `path_to_datasets/` should contain the datasets downloaded from [UEA TSC repo](http://www.timeseriesclassification.com/).
+
+Moreover, extra parameters can be set inside `main.py`.
+
+## Citation
+
+The paper regarding time series ordinal classification via shapelets has been submitted to International Joint Conference on Neural Networks (IJCNN2020).
+
+## Contributors
+
+#### TSOC via shapelets
+
+* David Guijo-Rubio (@dguijo)
+* Pedro Antonio Gutiérrez (@pagutierrez)
+* Anthony Bagnall(@TonyBagnall)

@@ -14,12 +14,12 @@ from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sklearn.preprocessing import LabelEncoder
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--timeseriesPath", "-t", type=str, default="/home/david/TSOC/timeseries/", help="Path to time series")
-parser.add_argument("--datasetPath", "-p", type=str, default="/home/david/TSOC/datasets", help="Path to datasets")
+parser.add_argument("--timeseriesPath", "-t", type=str, default="./timeseries/", help="Path to time series")
+parser.add_argument("--datasetPath", "-p", type=str, default="./datasets", help="Path to datasets")
 parser.add_argument("--datasetName", "-d", type=str, default="DistalPhalanxTW", help="Dataset name")
 parser.add_argument("--extractShapelets", "-e", type=bool, default=True, help="Boolean to extract or not the shapelets")
 parser.add_argument("--shp", "-s", type=str, default="Spearman", help="Shapelet extraction approach used")
-parser.add_argument("--res", "-r", type=str, default="/home/david/TSOC/results", help="Path to save the results")
+parser.add_argument("--res", "-r", type=str, default="./results", help="Path to save the results")
 parser.add_argument("--seed", "-n", type=int, default=0, help="Seed for the random state")
 args = parser.parse_args()
 
