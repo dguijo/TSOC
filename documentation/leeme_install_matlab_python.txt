@@ -1,7 +1,0 @@
-Instalar matlab en python
-
-1. Crearse el pyenv en el que queremos instalar matlab, preferiblemente con conda. 
-2. Instalar MATLAB
-3. cd $MATLABROOT/extern/engines/python - en mi caso $MATLABROOT es /usr/local/MATLAB/R2018b/
-4. sudo python3.6 setup.py install --prefix="/home/david/anaconda2/envs/TSOC" hay que llamarlo con la versión de python que queramos utilizar, sino pilla la que haya por defecto. y en --prefix he puesto la ruta al pyenv de conda que me he creado.
-5. Ya es capaz de hacer import matlab en python.

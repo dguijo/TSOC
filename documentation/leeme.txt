@@ -1,8 +1,0 @@
-1. Probar shapelet transform (ST):
-   - Aplicar SVC1V1, SVC1VA
-   -  Obtener métricas ordinales
-2. Modificar el ST para hacerlo ordinal:
-   - Medida de distancia ordinal en la extracción de las shapelets
-   - Cálculo de la calidad de la shapelet (modificar IG)
-   - Aplicar SVORIM, SVOREX, SVORLin, REDSVM
-   -  Obtener métricas ordinales
