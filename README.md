@@ -1,5 +1,7 @@
 # Time series ordinal classification via shapelets
 
+[![DOI](https://zenodo.org/badge/213915623.svg)](https://zenodo.org/badge/latestdoi/213915623)
+
 ## Algorithms included
 
 This repo includes different shapelet quality measures trying to boost the order information by refining the quality measure. These are:
