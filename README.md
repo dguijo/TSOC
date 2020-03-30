@@ -49,7 +49,7 @@ Moreover, extra parameters can be set inside `main.py`.
 
 ## Citation
 
-The paper regarding time series ordinal classification via shapelets has been submitted to International Joint Conference on Neural Networks (IJCNN2020).
+Information about the citation will be exposed soon.
 
 ## Contributors
 
