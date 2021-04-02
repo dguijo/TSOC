@@ -3,7 +3,7 @@ transformer from the time domain into the shapelet domain. Standard full transfo
 a randoms sampler
 """
 __author__ = ["Jason Lines", "David Guijo"]
-__all__=["OrdinalShapeletTransform","ContractedOrdinalShapeletTransform","RandomEnumerationOrdinalShapeletTransform","Shapelet","ShapeletPQ"]
+__all__=["OrdinalShapeletTransformRegLin","ContractedOrdinalShapeletTransformRegLin","RandomEnumerationOrdinalShapeletTransformRegLin","Shapelet","ShapeletPQ"]
 
 import os
 import time
@@ -26,7 +26,7 @@ from sklearn.metrics import r2_score
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
-class OrdinalShapeletTransform(BaseTransformer):
+class OrdinalShapeletTransformRegLin(BaseTransformer):
 
     """Shapelet Transform.
 
@@ -65,8 +65,7 @@ class OrdinalShapeletTransform(BaseTransformer):
              random_state=None,
              verbose=0,
              remove_self_similar=True,
-             quality="RegLin",
-             l_norm=1,
+             l_norm = 1
              ):
 
         self.min_shapelet_length = min_shapelet_length
@@ -77,7 +76,6 @@ class OrdinalShapeletTransform(BaseTransformer):
         self.remove_self_similar = remove_self_similar
         self.predefined_ig_rejection_level = 0.0
         self.shapelets = None
-        self.quality = quality
         self.l_norm = l_norm
 
     def fit(self, X, y=None):
@@ -106,7 +104,7 @@ class OrdinalShapeletTransform(BaseTransformer):
 
         candidates_evaluated = 0
 
-        if type(self) is RandomEnumerationOrdinalShapeletTransform:
+        if type(self) is RandomEnumerationOrdinalShapeletTransformRegLin:
             num_series_to_visit = min(self.num_cases_to_sample, len(y))
         else:
             num_series_to_visit = num_ins
@@ -132,7 +130,7 @@ class OrdinalShapeletTransform(BaseTransformer):
         case_ids_by_class = {i: np.where(y == i)[0] for i in distinct_class_vals}
 
         # if transform is random/contract then shuffle the data initially when determining which cases to visit
-        if type(self) is RandomEnumerationOrdinalShapeletTransform or type(self) is ContractedOrdinalShapeletTransform:
+        if type(self) is RandomEnumerationOrdinalShapeletTransformRegLin or type(self) is ContractedOrdinalShapeletTransformRegLin:
             for i in range(len(distinct_class_vals)):
                 self.random_state.shuffle(case_ids_by_class[distinct_class_vals[i]])
 
@@ -171,7 +169,7 @@ class OrdinalShapeletTransform(BaseTransformer):
             binary_ig_other_class_count = num_ins-binary_ig_this_class_count-1
 
             if self.verbose:
-                if type(self) == RandomEnumerationOrdinalShapeletTransform:
+                if type(self) == RandomEnumerationOrdinalShapeletTransformRegLin:
                     print("visiting series: " + str(series_id) + " (#" + str(case_idx + 1) + "/" + str(num_series_to_visit) + ")")
                 else:
                     print("visiting series: " + str(series_id) + " (#" + str(case_idx + 1) + ")")
@@ -219,7 +217,7 @@ class OrdinalShapeletTransform(BaseTransformer):
                 cand_start_pos = candidates_to_visit[candidate_idx][0]
                 cand_len = candidates_to_visit[candidate_idx][1]
 
-                candidate = OrdinalShapeletTransform.zscore(X[series_id][:,cand_start_pos: cand_start_pos + cand_len])
+                candidate = OrdinalShapeletTransformRegLin.zscore(X[series_id][:,cand_start_pos: cand_start_pos + cand_len])
 
                 # now go through all other series and get a distance from the candidate to each
                 orderline = []
@@ -249,7 +247,7 @@ class OrdinalShapeletTransform(BaseTransformer):
                         if start_left < 0:
                             start_left = X_lens[i]-1-cand_len
 
-                        comparison = OrdinalShapeletTransform.zscore(X[i][:,start_left: start_left+ cand_len])
+                        comparison = OrdinalShapeletTransformRegLin.zscore(X[i][:,start_left: start_left+ cand_len])
                         dist_left = np.linalg.norm(candidate-comparison)
                         bsf_dist = min(dist_left*dist_left, bsf_dist)
 
@@ -260,7 +258,7 @@ class OrdinalShapeletTransform(BaseTransformer):
                         # right
                         if start_right == X_lens[i]-cand_len+1:
                             start_right = 0
-                        comparison = OrdinalShapeletTransform.zscore(X[i][:,start_right: start_right + cand_len])
+                        comparison = OrdinalShapeletTransformRegLin.zscore(X[i][:,start_right: start_right + cand_len])
                         dist_right = np.linalg.norm(candidate-comparison)
                         bsf_dist = min(dist_right*dist_right, bsf_dist)
 
@@ -282,13 +280,7 @@ class OrdinalShapeletTransform(BaseTransformer):
 
                 # only do if candidate was not rejected
                 if candidate_rejected is False:
-                    if self.quality == "RegLin":
-                        final_ig = OrdinalShapeletTransform.calc_correlation(orderline, y[series_id], self.l_norm)
-                    elif self.quality == "Spearman":
-                        final_ig = OrdinalShapeletTransform.calc_spearman(orderline, y[series_id])
-                    elif self.quality == "OrdFisher":
-                        final_ig = OrdinalShapeletTransform.calc_fisher_ordinal(orderline)
-
+                    final_ig = OrdinalShapeletTransformRegLin.calc_correlation_regLin(orderline, y[series_id], self.l_norm)
                     accepted_candidate = Shapelet(series_id, cand_start_pos, cand_len, final_ig, candidate)
 
                     # add to min heap to store shapelets for this class
@@ -342,7 +334,7 @@ class OrdinalShapeletTransform(BaseTransformer):
             by_class_descending_ig = sorted(shapelet_heaps_by_class[class_val].get_array(), key=itemgetter(0), reverse=True)
 
             if self.remove_self_similar and len(by_class_descending_ig) > 0:
-                by_class_descending_ig = OrdinalShapeletTransform.remove_self_similar_shapelets(by_class_descending_ig)
+                by_class_descending_ig = OrdinalShapeletTransformRegLin.remove_self_similar_shapelets(by_class_descending_ig)
             else:
                 # need to extract shapelets from tuples
                 by_class_descending_ig = [x[2] for x in by_class_descending_ig]
@@ -429,7 +421,7 @@ class OrdinalShapeletTransform(BaseTransformer):
                 this_shapelet_length = self.shapelets[s].length
 
                 for start_pos in range(0, len(this_series[0]) - this_shapelet_length + 1):
-                    comparison = OrdinalShapeletTransform.zscore(this_series[:, start_pos:start_pos + this_shapelet_length])
+                    comparison = OrdinalShapeletTransformRegLin.zscore(this_series[:, start_pos:start_pos + this_shapelet_length])
 
                     dist = np.linalg.norm(self.shapelets[s].data - comparison)
                     dist = dist*dist
@@ -517,13 +509,22 @@ class OrdinalShapeletTransform(BaseTransformer):
         return numerador/((len(labels) - 1) * denominador)
 
     @staticmethod
-    def calc_correlation(orderline, shp_class, l_norm):
+    def calc_correlation(orderline, shp_class):
+
+        orderline = np.array(orderline)
+        r2_value = r2_score(orderline[:, 0], np.abs(orderline[:, 1] - shp_class))
+
+        return r2_value
+
+    @staticmethod
+    def calc_correlation_regLin(orderline, shp_class, l_norm):
 
         orderline = np.array(orderline)
 
         _, _, r_value, _, _ = linregress(orderline[:, 0], np.power(np.abs(orderline[:, 1] - shp_class), l_norm))
         return r_value ** 2
 
+    """
     @staticmethod
     def calc_early_correlation(orderline, shp_class, y):
 
@@ -542,19 +543,13 @@ class OrdinalShapeletTransform(BaseTransformer):
         r2_value = r2_score(orderline_aux[:, 0], np.abs(orderline_aux[:, 1] - shp_class))
 
         return r2_value
-
-    @staticmethod
-    def calc_spearman(orderline, shp_class):
-        orderline = np.array(orderline)
-        corr_spearman, _ = spearmanr(orderline[:, 0], np.abs(orderline[:, 1] - shp_class))
-        return corr_spearman
-
+    """
     # could cythonise
     @staticmethod
     def calc_binary_ig(orderline, total_num_this_class, total_num_other_class):
         # def entropy(ent_class_counts, all_class_count):
 
-        initial_ent = OrdinalShapeletTransform.binary_entropy(total_num_this_class, total_num_other_class)
+        initial_ent = OrdinalShapeletTransformRegLin.binary_entropy(total_num_this_class, total_num_other_class)
         bsf_ig = 0
 
         count_this_class = 0
@@ -572,10 +567,10 @@ class OrdinalShapeletTransform(BaseTransformer):
 
             # optimistically add this class to left side first and other to right
             left_prop = (split + 1) / total_all
-            ent_left = OrdinalShapeletTransform.binary_entropy(count_this_class,count_other_class)
+            ent_left = OrdinalShapeletTransformRegLin.binary_entropy(count_this_class,count_other_class)
 
             right_prop = 1-left_prop # because right side must optimistically contain everything else
-            ent_right = OrdinalShapeletTransform.binary_entropy(total_num_this_class-count_this_class,total_num_other_class-count_other_class)
+            ent_right = OrdinalShapeletTransformRegLin.binary_entropy(total_num_this_class-count_this_class,total_num_other_class-count_other_class)
 
             ig = initial_ent - left_prop * ent_left - right_prop * ent_right
             bsf_ig = max(ig, bsf_ig)
@@ -587,7 +582,7 @@ class OrdinalShapeletTransform(BaseTransformer):
     def calc_early_binary_ig(orderline, num_this_class_in_orderline, num_other_class_in_orderline, num_to_add_this_class, num_to_add_other_class):
         # def entropy(ent_class_counts, all_class_count):
 
-        initial_ent = OrdinalShapeletTransform.binary_entropy(num_this_class_in_orderline+num_to_add_this_class, num_other_class_in_orderline+num_to_add_other_class)
+        initial_ent = OrdinalShapeletTransformRegLin.binary_entropy(num_this_class_in_orderline+num_to_add_this_class, num_other_class_in_orderline+num_to_add_other_class)
         bsf_ig = 0
 
         # actual observations in orderline
@@ -606,20 +601,20 @@ class OrdinalShapeletTransform(BaseTransformer):
 
             # optimistically add this class to left side first and other to right
             left_prop = (split + 1 + num_to_add_this_class) / total_all
-            ent_left = OrdinalShapeletTransform.binary_entropy(count_this_class+num_to_add_this_class,count_other_class)
+            ent_left = OrdinalShapeletTransformRegLin.binary_entropy(count_this_class+num_to_add_this_class,count_other_class)
 
             right_prop = 1-left_prop # because right side must optimistically contain everything else
-            ent_right = OrdinalShapeletTransform.binary_entropy(num_this_class_in_orderline-count_this_class,num_other_class_in_orderline-count_other_class+num_to_add_other_class)
+            ent_right = OrdinalShapeletTransformRegLin.binary_entropy(num_this_class_in_orderline-count_this_class,num_other_class_in_orderline-count_other_class+num_to_add_other_class)
 
             ig = initial_ent - left_prop * ent_left - right_prop * ent_right
             bsf_ig = max(ig, bsf_ig)
 
             # now optimistically add this class to right, other to left
             left_prop = (split + 1 + num_to_add_other_class) / total_all
-            ent_left = OrdinalShapeletTransform.binary_entropy(count_this_class,count_other_class+num_to_add_other_class)
+            ent_left = OrdinalShapeletTransformRegLin.binary_entropy(count_this_class,count_other_class+num_to_add_other_class)
 
             right_prop = 1-left_prop # because right side must optimistically contain everything else
-            ent_right = OrdinalShapeletTransform.binary_entropy(num_this_class_in_orderline-count_this_class+num_to_add_this_class,num_other_class_in_orderline-count_other_class)
+            ent_right = OrdinalShapeletTransformRegLin.binary_entropy(num_this_class_in_orderline-count_this_class+num_to_add_this_class,num_other_class_in_orderline-count_other_class)
             ig = initial_ent - left_prop * ent_left - right_prop * ent_right
             bsf_ig = max(ig, bsf_ig)
 
@@ -678,7 +673,7 @@ class OrdinalShapeletTransform(BaseTransformer):
         return sum_dist
 
 
-class ContractedOrdinalShapeletTransform(OrdinalShapeletTransform):
+class ContractedOrdinalShapeletTransformRegLin(OrdinalShapeletTransformRegLin):
     __author__ = "Jason Lines and David Guijo"
 
     """Contracted Shapelet Transform.
@@ -720,8 +715,7 @@ class ContractedOrdinalShapeletTransform(OrdinalShapeletTransform):
             random_state = None,
             verbose = 0,
             remove_self_similar = True,
-            quality = "RegLin",
-            l_norm = 1,
+            l_norm = 1
     ):
 
         self.min_shapelet_length = min_shapelet_length
@@ -734,11 +728,10 @@ class ContractedOrdinalShapeletTransform(OrdinalShapeletTransform):
         self.remove_self_similar = remove_self_similar
         self.predefined_ig_rejection_level = 0.0
         self.shapelets = None
-        self.quality = quality
         self.l_norm = l_norm
 
 
-class RandomEnumerationOrdinalShapeletTransform(OrdinalShapeletTransform):
+class RandomEnumerationOrdinalShapeletTransformRegLin(OrdinalShapeletTransformRegLin):
     pass
     # to follow
 

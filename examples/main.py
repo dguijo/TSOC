@@ -18,7 +18,8 @@ parser.add_argument("--timeseriesPath", "-t", type=str, default="./timeseries/",
 parser.add_argument("--datasetPath", "-p", type=str, default="./datasets", help="Path to datasets")
 parser.add_argument("--datasetName", "-d", type=str, default="DistalPhalanxTW", help="Dataset name")
 parser.add_argument("--extractShapelets", "-e", type=bool, default=True, help="Boolean to extract or not the shapelets")
-parser.add_argument("--shp", "-s", type=str, default="Spearman", help="Shapelet extraction approach used")
+parser.add_argument("--shp", "-s", type=str, default="Spearman", help="Shapelet quality measure used")
+parser.add_argument("--lNorm", "-l", type=float, default=1, help="Only for RegLin, it is the l_norm for the class difference computation")
 parser.add_argument("--res", "-r", type=str, default="./results", help="Path to save the results")
 parser.add_argument("--seed", "-n", type=int, default=0, help="Seed for the random state")
 args = parser.parse_args()
@@ -120,32 +121,10 @@ def comparison_experiments(data_dir, res_dir, data_name, transform):
             print('\n\n FAILED: ', sys.exc_info()[0], '\n\n')
 
 
-def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type, seed):
+def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type, seed, l_norm):
     trainX, trainY = load_ts(timeseries_dir + data_name + '/' + data_name + '_TRAIN.ts')
     testX, testY = load_ts(timeseries_dir + data_name + '/' + data_name + '_TEST.ts')
 
-    """
-    # PARA CALCULAR IR 
-    le = LabelEncoder()
-    trainY = le.fit_transform(trainY)
-    testY = le.transform(testY)
-    trainY = trainY + 1
-    testY = testY + 1
-    etiquetas = np.concatenate((trainY, testY))
-    classes, counter = np.unique(etiquetas, return_counts=True)
-    print(classes)
-    print(counter)
-    IR_q = 0
-    for idx, i in enumerate(classes):
-        numerador = 0
-        for jdx, j in enumerate(classes):
-            if j != i:
-                numerador += counter[jdx]
-        IR_q += numerador / (len(classes) * counter[idx])
-    IR = IR_q / len(classes)
-    print(IR)
-    quit()
-    """
     # Encoding of the labels from 1 to num_classes of the dataset.
     le = LabelEncoder()
     trainY = le.fit_transform(trainY)
@@ -155,7 +134,7 @@ def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type, seed):
     if shp_type == "Standard":
         shp = ContractedShapeletTransform(time_limit_in_mins=0.1, random_state=seed)
     else:
-        shp = ContractedOrdinalShapeletTransform(time_limit_in_mins=0.1, quality=shp_type, random_state=seed)
+        shp = ContractedOrdinalShapeletTransform(time_limit_in_mins=0.1, quality=shp_type, random_state=seed, l_norm=l_norm)
     shp.fit(trainX, trainY)
 
     shapelets = shp.get_shapelets()
@@ -178,17 +157,21 @@ def shapelet_extraction(timeseries_dir, data_dir, data_name, shp_type, seed):
 
 if __name__ == "__main__":
     print("Dataset: " + args.datasetName)
-    print("Shapelet Extraction Procedure: " + args.shp)
+    print("Shapelet Quality Measure: " + args.shp)
     print("Semilla: " + str(args.seed))
 
     if args.shp not in ["Standard", "RegLin", "OrdFisher", "Spearman"]:
         raise ModuleNotFoundError("The shapelet quality measure is not implemented yet.")
 
-    final_dataset_path = args.datasetPath + '_' + str(args.seed) + '/' + args.shp
-    final_results_path = args.res + '_' + str(args.seed) + '/' + args.shp + '/'
+    if args.shp == "RegLin":
+        final_dataset_path = args.datasetPath + '_' + str(args.seed) + '/' + args.shp + '_' + str(args.lNorm)
+        final_results_path = args.res + '_' + str(args.seed) + '/' + args.shp + '_' + str(args.lNorm) + '/'
+    else:
+        final_dataset_path = args.datasetPath + '_' + str(args.seed) + '/' + args.shp
+        final_results_path = args.res + '_' + str(args.seed) + '/' + args.shp + '/'
 
     if args.extractShapelets:
-        shapelet_extraction(args.timeseriesPath, final_dataset_path, args.datasetName, args.shp, int(args.seed))
+        shapelet_extraction(args.timeseriesPath, final_dataset_path, args.datasetName, args.shp, int(args.seed), float(args.lNorm))
     else:
         final_existing_shapelets_path = final_dataset_path + '/' + args.datasetName + '/' + args.datasetName
         if (not os.path.exists(final_existing_shapelets_path + '_shapelets.csv')):
